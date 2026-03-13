@@ -59,6 +59,9 @@
           </button>
         </nav>
         <div class="sidebar-footer">
+          <button id="export-btn" class="sidebar-lock-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export</button>
+          <button id="import-btn" class="sidebar-lock-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none">
           <button id="lock-btn" class="sidebar-lock-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Lock</button>
         </div>
       </aside>
@@ -435,6 +438,22 @@
       </div>
     </main>
       </div><!-- /.main-area -->
+
+      <!-- Export Modal -->
+      <div id="export-modal" class="modal" hidden>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Export Data</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div style="padding:24px; display:flex; flex-direction:column; gap:12px;">
+            <p style="color:var(--gray-500); font-size:14px;">Choose a format to export all your budgets, expenses, and shopping list data.</p>
+            <button id="export-json" class="btn btn-export" style="width:100%;">Export as JSON</button>
+            <button id="export-excel" class="btn btn-export" style="width:100%;">Export as Excel (.csv)</button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /.app-layout -->
   </div>
 

@@ -723,6 +723,117 @@
     return div.innerHTML;
   }
 
+  // ============================
+  // EXPORT / IMPORT
+  // ============================
+  const exportModal = document.getElementById('export-modal');
+  const exportBtn = document.getElementById('export-btn');
+  const importBtn = document.getElementById('import-btn');
+  const importFile = document.getElementById('import-file');
+
+  exportBtn.addEventListener('click', () => openModal(exportModal));
+
+  function downloadFile(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function getTimestamp() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // --- JSON Export ---
+  document.getElementById('export-json').addEventListener('click', () => {
+    const data = { budgets, expenses, shoppingItems };
+    downloadFile(
+      `renotracker-backup-${getTimestamp()}.json`,
+      JSON.stringify(data, null, 2),
+      'application/json'
+    );
+    closeModal(exportModal);
+  });
+
+  // --- CSV/Excel Export ---
+  function toCsvRow(values) {
+    return values.map(v => {
+      const str = String(v == null ? '' : v);
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? '"' + str.replace(/"/g, '""') + '"'
+        : str;
+    }).join(',');
+  }
+
+  document.getElementById('export-excel').addEventListener('click', () => {
+    let csv = '';
+
+    // Budgets sheet
+    csv += '--- BUDGETS ---\n';
+    csv += toCsvRow(['Category', 'Budget Amount', 'Color']) + '\n';
+    budgets.forEach(b => {
+      csv += toCsvRow([b.name, b.amount, b.color]) + '\n';
+    });
+
+    csv += '\n--- EXPENSES ---\n';
+    csv += toCsvRow(['Date', 'Description', 'Category', 'Amount', 'Notes']) + '\n';
+    expenses.forEach(e => {
+      csv += toCsvRow([e.date, e.description, e.category, e.amount, e.notes || '']) + '\n';
+    });
+
+    csv += '\n--- SHOPPING LIST ---\n';
+    csv += toCsvRow(['Item', 'Room', 'Type', 'Vendor', 'Qty', 'Price', 'Status', 'Notes', 'Link']) + '\n';
+    shoppingItems.forEach(i => {
+      csv += toCsvRow([i.name, i.room, i.material, i.vendor, i.qty, i.price, i.status, i.notes || '', i.link || '']) + '\n';
+    });
+
+    downloadFile(
+      `renotracker-export-${getTimestamp()}.csv`,
+      csv,
+      'text/csv'
+    );
+    closeModal(exportModal);
+  });
+
+  // --- JSON Import ---
+  importBtn.addEventListener('click', () => importFile.click());
+
+  importFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!confirm('This will replace all your current data. Continue?')) return;
+
+        if (Array.isArray(data.budgets)) {
+          budgets = data.budgets;
+          saveBudgets();
+        }
+        if (Array.isArray(data.expenses)) {
+          expenses = data.expenses;
+          saveExpenses();
+        }
+        if (Array.isArray(data.shoppingItems)) {
+          shoppingItems = data.shoppingItems;
+          saveShoppingItems();
+        }
+
+        renderAll();
+        alert('Data imported successfully!');
+      } catch {
+        alert('Invalid file. Please select a valid JSON backup file.');
+      }
+    };
+    reader.readAsText(file);
+    importFile.value = '';
+  });
+
   // --- Auto-unlock if session is still valid (must be after all declarations) ---
   if (hasValidSession()) {
     setSession();

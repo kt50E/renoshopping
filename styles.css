@@ -197,7 +197,19 @@ body {
   font-weight: 700;
 }
 .btn-primary:hover {
-  background: #97B8A0;
+  background: #E8E0D8;
+}
+
+.btn-export {
+  background: white;
+  border: 2px solid var(--gray-300);
+  color: var(--gray-700);
+  font-weight: 600;
+}
+.btn-export:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-dark);
 }
 
 .btn-outline {
