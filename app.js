@@ -83,11 +83,6 @@
     Storage.remove('session_expires');
   }
 
-  if (hasValidSession()) {
-    setSession(); // refresh the timer
-    unlock();
-  }
-
   lockSubmit.addEventListener('click', () => {
     if (lockPassword.value === 'spongebob') {
       setSession();
@@ -195,7 +190,7 @@
 
   function renderBudgets() {
     const totalBudget = budgets.reduce((s, b) => s + Number(b.amount), 0);
-    const totalSpent = budgets.reduce((s, b) => s + getBudgetSpent(b.name), 0);
+    const totalSpent = expenses.reduce((s, e) => s + Number(e.amount), 0);
     const remaining = totalBudget - totalSpent;
 
     document.getElementById('total-budget').textContent = formatCurrency(totalBudget);
@@ -256,11 +251,46 @@
     });
   }
 
+  const budgetNameSelect = document.getElementById('budget-name');
+  const budgetNameCustom = document.getElementById('budget-name-custom');
+
+  budgetNameSelect.addEventListener('change', () => {
+    if (budgetNameSelect.value === 'custom') {
+      budgetNameCustom.style.display = '';
+      budgetNameCustom.focus();
+    } else {
+      budgetNameCustom.style.display = 'none';
+      budgetNameCustom.value = '';
+    }
+  });
+
+  function getBudgetNameValue() {
+    return budgetNameSelect.value === 'custom'
+      ? budgetNameCustom.value.trim()
+      : budgetNameSelect.value;
+  }
+
+  function setBudgetNameValue(name) {
+    // Check if name matches an existing option
+    const option = Array.from(budgetNameSelect.options).find(o => o.value === name);
+    if (option) {
+      budgetNameSelect.value = name;
+      budgetNameCustom.style.display = 'none';
+      budgetNameCustom.value = '';
+    } else {
+      budgetNameSelect.value = 'custom';
+      budgetNameCustom.style.display = '';
+      budgetNameCustom.value = name;
+    }
+  }
+
   addBudgetBtn.addEventListener('click', () => {
     budgetModalTitle.textContent = 'Add Budget';
     budgetForm.reset();
     document.getElementById('budget-id').value = '';
     document.getElementById('budget-color').value = '#6C63FF';
+    budgetNameCustom.style.display = 'none';
+    budgetNameCustom.value = '';
     openModal(budgetModal);
   });
 
@@ -268,7 +298,7 @@
     const b = budgets.find(x => x.id === id);
     if (!b) return;
     budgetModalTitle.textContent = 'Edit Budget';
-    document.getElementById('budget-name').value = b.name;
+    setBudgetNameValue(b.name);
     document.getElementById('budget-amount').value = b.amount;
     document.getElementById('budget-color').value = b.color;
     document.getElementById('budget-id').value = b.id;
@@ -285,7 +315,7 @@
   budgetForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const id = document.getElementById('budget-id').value;
-    const name = document.getElementById('budget-name').value.trim();
+    const name = getBudgetNameValue();
     const amount = parseFloat(document.getElementById('budget-amount').value);
     const color = document.getElementById('budget-color').value;
 
@@ -329,24 +359,36 @@
     Storage.set('expenses', expenses);
   }
 
-  function populateCategoryDropdowns() {
-    const cats = budgets.map(b => b.name);
-    const selects = [
-      document.getElementById('expense-category'),
-      document.getElementById('expense-filter-category')
-    ];
+  const expenseCategorySelect = document.getElementById('expense-category');
+  const expenseCategoryCustom = document.getElementById('expense-category-custom');
 
-    selects.forEach((sel, i) => {
-      const current = sel.value;
-      const isFilter = i === 1;
-      sel.innerHTML = isFilter
-        ? '<option value="">All Categories</option>'
-        : '<option value="">Select category...</option>';
-      cats.forEach(c => {
-        sel.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`;
-      });
-      sel.value = current;
-    });
+  expenseCategorySelect.addEventListener('change', () => {
+    if (expenseCategorySelect.value === 'custom') {
+      expenseCategoryCustom.style.display = '';
+      expenseCategoryCustom.focus();
+    } else {
+      expenseCategoryCustom.style.display = 'none';
+      expenseCategoryCustom.value = '';
+    }
+  });
+
+  function getExpenseCategoryValue() {
+    return expenseCategorySelect.value === 'custom'
+      ? expenseCategoryCustom.value.trim()
+      : expenseCategorySelect.value;
+  }
+
+  function setExpenseCategoryValue(name) {
+    const option = Array.from(expenseCategorySelect.options).find(o => o.value === name);
+    if (option) {
+      expenseCategorySelect.value = name;
+      expenseCategoryCustom.style.display = 'none';
+      expenseCategoryCustom.value = '';
+    } else {
+      expenseCategorySelect.value = 'custom';
+      expenseCategoryCustom.style.display = '';
+      expenseCategoryCustom.value = name;
+    }
   }
 
   function renderExpenses() {
@@ -410,6 +452,8 @@
     expenseForm.reset();
     document.getElementById('expense-id').value = '';
     document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+    expenseCategoryCustom.style.display = 'none';
+    expenseCategoryCustom.value = '';
     openModal(expenseModal);
   });
 
@@ -419,7 +463,7 @@
     expenseModalTitle.textContent = 'Edit Expense';
     document.getElementById('expense-date').value = e.date;
     document.getElementById('expense-desc').value = e.description;
-    document.getElementById('expense-category').value = e.category;
+    setExpenseCategoryValue(e.category);
     document.getElementById('expense-amount').value = e.amount;
     document.getElementById('expense-notes').value = e.notes || '';
     document.getElementById('expense-id').value = e.id;
@@ -439,7 +483,7 @@
     const data = {
       date: document.getElementById('expense-date').value,
       description: document.getElementById('expense-desc').value.trim(),
-      category: document.getElementById('expense-category').value,
+      category: getExpenseCategoryValue(),
       amount: parseFloat(document.getElementById('expense-amount').value),
       notes: document.getElementById('expense-notes').value.trim()
     };
@@ -665,7 +709,6 @@
   // RENDER ALL
   // ============================
   function renderAll() {
-    populateCategoryDropdowns();
     renderBudgets();
     renderExpenses();
     renderShopping();
@@ -678,6 +721,12 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  // --- Auto-unlock if session is still valid (must be after all declarations) ---
+  if (hasValidSession()) {
+    setSession();
+    unlock();
   }
 
 })();

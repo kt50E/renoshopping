@@ -107,8 +107,38 @@
           </div>
           <form id="budget-form">
             <div class="form-group">
-              <label for="budget-name">Category / Room</label>
-              <input type="text" id="budget-name" placeholder="e.g. Kitchen, Bathroom, Permits">
+              <label for="budget-name">Category</label>
+              <select id="budget-name">
+                <option value="">Select category...</option>
+                <optgroup label="Rooms">
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Bathroom">Bathroom</option>
+                  <option value="Living Room">Living Room</option>
+                  <option value="Bedroom">Bedroom</option>
+                  <option value="Dining Room">Dining Room</option>
+                  <option value="Laundry">Laundry</option>
+                  <option value="Outdoor/Patio">Outdoor/Patio</option>
+                </optgroup>
+                <optgroup label="Home Systems & Upgrades">
+                  <option value="Window Replacement">Window Replacement</option>
+                  <option value="HVAC Replacement">HVAC Replacement</option>
+                  <option value="Roofing">Roofing</option>
+                  <option value="Insulation">Insulation</option>
+                  <option value="Siding">Siding</option>
+                </optgroup>
+                <optgroup label="Professional Services">
+                  <option value="Interior Designer">Interior Designer</option>
+                  <option value="Architect">Architect</option>
+                  <option value="Contractor">Contractor</option>
+                  <option value="Electrician">Electrician</option>
+                  <option value="Plumber">Plumber</option>
+                  <option value="Permits & Fees">Permits & Fees</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="custom">Custom...</option>
+                </optgroup>
+              </select>
+              <input type="text" id="budget-name-custom" placeholder="Enter custom category name" style="display:none; margin-top:8px;">
             </div>
             <div class="form-group">
               <label for="budget-amount">Budget Amount ($)</label>
@@ -138,6 +168,30 @@
       <div class="filters">
         <select id="expense-filter-category">
           <option value="">All Categories</option>
+          <optgroup label="Rooms">
+            <option value="Kitchen">Kitchen</option>
+            <option value="Bathroom">Bathroom</option>
+            <option value="Living Room">Living Room</option>
+            <option value="Bedroom">Bedroom</option>
+            <option value="Dining Room">Dining Room</option>
+            <option value="Laundry">Laundry</option>
+            <option value="Outdoor/Patio">Outdoor/Patio</option>
+          </optgroup>
+          <optgroup label="Home Systems & Upgrades">
+            <option value="Window Replacement">Window Replacement</option>
+            <option value="HVAC Replacement">HVAC Replacement</option>
+            <option value="Roofing">Roofing</option>
+            <option value="Insulation">Insulation</option>
+            <option value="Siding">Siding</option>
+          </optgroup>
+          <optgroup label="Professional Services">
+            <option value="Interior Designer">Interior Designer</option>
+            <option value="Architect">Architect</option>
+            <option value="Contractor">Contractor</option>
+            <option value="Electrician">Electrician</option>
+            <option value="Plumber">Plumber</option>
+            <option value="Permits & Fees">Permits & Fees</option>
+          </optgroup>
         </select>
         <input type="text" id="expense-search" placeholder="Search expenses...">
       </div>
@@ -182,7 +236,35 @@
               <label for="expense-category">Category</label>
               <select id="expense-category">
                 <option value="">Select category...</option>
+                <optgroup label="Rooms">
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Bathroom">Bathroom</option>
+                  <option value="Living Room">Living Room</option>
+                  <option value="Bedroom">Bedroom</option>
+                  <option value="Dining Room">Dining Room</option>
+                  <option value="Laundry">Laundry</option>
+                  <option value="Outdoor/Patio">Outdoor/Patio</option>
+                </optgroup>
+                <optgroup label="Home Systems & Upgrades">
+                  <option value="Window Replacement">Window Replacement</option>
+                  <option value="HVAC Replacement">HVAC Replacement</option>
+                  <option value="Roofing">Roofing</option>
+                  <option value="Insulation">Insulation</option>
+                  <option value="Siding">Siding</option>
+                </optgroup>
+                <optgroup label="Professional Services">
+                  <option value="Interior Designer">Interior Designer</option>
+                  <option value="Architect">Architect</option>
+                  <option value="Contractor">Contractor</option>
+                  <option value="Electrician">Electrician</option>
+                  <option value="Plumber">Plumber</option>
+                  <option value="Permits & Fees">Permits & Fees</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="custom">Custom...</option>
+                </optgroup>
               </select>
+              <input type="text" id="expense-category-custom" placeholder="Enter custom category name" style="display:none; margin-top:8px;">
             </div>
             <div class="form-group">
               <label for="expense-amount">Amount ($)</label>
