@@ -60,6 +60,7 @@
   }
 
   function lock() {
+    clearSession();
     lockScreen.hidden = false;
     app.hidden = true;
     lockPassword.value = '';
@@ -67,8 +68,29 @@
     initLock();
   }
 
+  const SESSION_DURATION = 20 * 60 * 1000; // 20 minutes
+
+  function setSession() {
+    Storage.set('session_expires', Date.now() + SESSION_DURATION);
+  }
+
+  function hasValidSession() {
+    const expires = Storage.get('session_expires');
+    return expires && Date.now() < expires;
+  }
+
+  function clearSession() {
+    Storage.remove('session_expires');
+  }
+
+  if (hasValidSession()) {
+    setSession(); // refresh the timer
+    unlock();
+  }
+
   lockSubmit.addEventListener('click', () => {
     if (lockPassword.value === 'spongebob') {
+      setSession();
       unlock();
     } else {
       lockError.hidden = false;
@@ -276,11 +298,6 @@
             if (exp.category === b.name) exp.category = name;
           });
           saveExpenses();
-          // Update shopping item categories too
-          shoppingItems.forEach(item => {
-            if (item.category === b.name) item.category = name;
-          });
-          saveShoppingItems();
         }
         b.name = name;
         b.amount = amount;
@@ -316,14 +333,12 @@
     const cats = budgets.map(b => b.name);
     const selects = [
       document.getElementById('expense-category'),
-      document.getElementById('expense-filter-category'),
-      document.getElementById('item-category'),
-      document.getElementById('shopping-filter-category')
+      document.getElementById('expense-filter-category')
     ];
 
     selects.forEach((sel, i) => {
       const current = sel.value;
-      const isFilter = i === 1 || i === 3;
+      const isFilter = i === 1;
       sel.innerHTML = isFilter
         ? '<option value="">All Categories</option>'
         : '<option value="">Select category...</option>';
@@ -341,9 +356,9 @@
     let filtered = expenses;
     if (filterCat) filtered = filtered.filter(e => e.category === filterCat);
     if (search) filtered = filtered.filter(e =>
-      e.description.toLowerCase().includes(search) ||
-      e.category.toLowerCase().includes(search) ||
-      (e.notes && e.notes.toLowerCase().includes(search))
+      (e.description || '').toLowerCase().includes(search) ||
+      (e.category || '').toLowerCase().includes(search) ||
+      (e.notes || '').toLowerCase().includes(search)
     );
 
     // Sort by date descending
@@ -364,7 +379,7 @@
             ${escapeHtml(e.description)}
             ${e.notes ? `<br><small style="color:var(--gray-400)">${escapeHtml(e.notes)}</small>` : ''}
           </td>
-          <td><span class="category-badge" style="background:${color}20;color:${color}">${escapeHtml(e.category)}</span></td>
+          <td><span class="category-badge" style="background:${color}20;color:${color}">${escapeHtml(e.category || 'Uncategorized')}</span></td>
           <td class="expense-amount">${formatCurrency(e.amount)}</td>
           <td>
             <div style="display:flex;gap:4px">
@@ -454,7 +469,8 @@
   const itemForm = document.getElementById('item-form');
   const itemModalTitle = document.getElementById('item-modal-title');
   const shoppingListEl = document.getElementById('shopping-list');
-  const shoppingFilterCat = document.getElementById('shopping-filter-category');
+  const shoppingFilterRoom = document.getElementById('shopping-filter-room');
+  const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
   const hidePurchased = document.getElementById('hide-purchased');
   const shoppingTotal = document.getElementById('shopping-total');
 
@@ -462,12 +478,35 @@
     Storage.set('shopping', shoppingItems);
   }
 
+  function syncExpenseFromItem(item) {
+    // Remove any existing linked expense
+    expenses = expenses.filter(e => e.shoppingItemId !== item.id);
+
+    // If purchased, create a new expense
+    if (item.status === 'Purchased') {
+      const total = (item.qty || 1) * (item.price || 0);
+      expenses.push({
+        id: uuid(),
+        shoppingItemId: item.id,
+        date: new Date().toISOString().split('T')[0],
+        description: item.name,
+        category: item.room || '',
+        amount: total,
+        notes: [item.vendor ? `Vendor: ${item.vendor}` : '', item.material ? `Type: ${item.material}` : '', item.notes || ''].filter(Boolean).join(' | ')
+      });
+    }
+
+    saveExpenses();
+  }
+
   function renderShopping() {
-    const filterCat = shoppingFilterCat.value;
+    const filterRoom = shoppingFilterRoom.value;
+    const filterMaterial = shoppingFilterMaterial.value;
     const hideChecked = hidePurchased.checked;
 
     let filtered = shoppingItems;
-    if (filterCat) filtered = filtered.filter(i => i.category === filterCat);
+    if (filterRoom) filtered = filtered.filter(i => i.room === filterRoom);
+    if (filterMaterial) filtered = filtered.filter(i => i.material === filterMaterial);
     if (hideChecked) filtered = filtered.filter(i => !i.purchased);
 
     // Sort: unpurchased first
@@ -477,21 +516,25 @@
       shoppingListEl.innerHTML = '<p class="empty-state">No items to show.</p>';
     } else {
       shoppingListEl.innerHTML = filtered.map(item => {
-        const budget = budgets.find(b => b.name === item.category);
-        const color = budget ? budget.color : '#6B7280';
         const total = (item.qty || 1) * (item.price || 0);
+        const status = item.status || 'Selected';
+        const statusColor = status === 'Purchased' ? 'var(--success)' : 'var(--warning)';
+        const statusBg = status === 'Purchased' ? 'var(--success-light)' : 'var(--warning-light)';
         return `
           <div class="shopping-item ${item.purchased ? 'purchased' : ''}" data-id="${item.id}">
             <input type="checkbox" class="shopping-item-check" ${item.purchased ? 'checked' : ''}>
             <div class="shopping-item-info">
               <div class="shopping-item-name">${escapeHtml(item.name)}</div>
               <div class="shopping-item-details">
-                <span class="category-badge" style="background:${color}20;color:${color}">${escapeHtml(item.category)}</span>
+                <span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || 'No Room')}</span>
+                <span class="category-badge" style="background:#6C63FF20;color:#6C63FF">${escapeHtml(item.material || 'No Type')}</span>
+                ${item.vendor ? `<span class="category-badge" style="background:var(--gray-100);color:var(--gray-600)">${escapeHtml(item.vendor)}</span>` : ''}
                 &nbsp; Qty: ${item.qty || 1}
                 ${item.link ? ` &nbsp; <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View Link</a>` : ''}
                 ${item.notes ? `<br>${escapeHtml(item.notes)}` : ''}
               </div>
             </div>
+            <span class="category-badge status-badge" style="background:${statusBg};color:${statusColor}">${status}</span>
             <span class="shopping-item-price">${total > 0 ? formatCurrency(total) : ''}</span>
             <div class="shopping-item-actions">
               <button class="btn-icon edit-item" title="Edit">✏️</button>
@@ -515,8 +558,10 @@
         const item = shoppingItems.find(i => i.id === id);
         if (item) {
           item.purchased = cb.checked;
+          item.status = cb.checked ? 'Purchased' : 'Selected';
           saveShoppingItems();
-          renderShopping();
+          syncExpenseFromItem(item);
+          renderAll();
         }
       });
     });
@@ -546,10 +591,13 @@
     if (!item) return;
     itemModalTitle.textContent = 'Edit Item';
     document.getElementById('item-name').value = item.name;
-    document.getElementById('item-category').value = item.category;
+    document.getElementById('item-room').value = item.room || '';
+    document.getElementById('item-material').value = item.material || '';
+    document.getElementById('item-vendor').value = item.vendor || '';
     document.getElementById('item-qty').value = item.qty || 1;
     document.getElementById('item-price').value = item.price || '';
     document.getElementById('item-link').value = item.link || '';
+    document.getElementById('item-status').value = item.status || 'Selected';
     document.getElementById('item-notes').value = item.notes || '';
     document.getElementById('item-id').value = item.id;
     openModal(itemModal);
@@ -558,8 +606,10 @@
   function deleteItem(id) {
     if (!confirm('Delete this item?')) return;
     shoppingItems = shoppingItems.filter(i => i.id !== id);
+    expenses = expenses.filter(e => e.shoppingItemId !== id);
     saveShoppingItems();
-    renderShopping();
+    saveExpenses();
+    renderAll();
   }
 
   itemForm.addEventListener('submit', (e) => {
@@ -567,26 +617,34 @@
     const id = document.getElementById('item-id').value;
     const data = {
       name: document.getElementById('item-name').value.trim(),
-      category: document.getElementById('item-category').value,
+      room: document.getElementById('item-room').value,
+      material: document.getElementById('item-material').value,
+      vendor: document.getElementById('item-vendor').value.trim(),
       qty: parseInt(document.getElementById('item-qty').value) || 1,
       price: parseFloat(document.getElementById('item-price').value) || 0,
       link: document.getElementById('item-link').value.trim(),
+      status: document.getElementById('item-status').value,
       notes: document.getElementById('item-notes').value.trim()
     };
 
+    let savedItem;
     if (id) {
-      const item = shoppingItems.find(x => x.id === id);
-      if (item) Object.assign(item, data);
+      savedItem = shoppingItems.find(x => x.id === id);
+      if (savedItem) Object.assign(savedItem, data);
     } else {
-      shoppingItems.push({ id: uuid(), purchased: false, ...data });
+      savedItem = { id: uuid(), purchased: data.status === 'Purchased', ...data };
+      shoppingItems.push(savedItem);
     }
+    savedItem.purchased = savedItem.status === 'Purchased';
 
     saveShoppingItems();
+    syncExpenseFromItem(savedItem);
     closeModal(itemModal);
-    renderShopping();
+    renderAll();
   });
 
-  shoppingFilterCat.addEventListener('change', renderShopping);
+  shoppingFilterRoom.addEventListener('change', renderShopping);
+  shoppingFilterMaterial.addEventListener('change', renderShopping);
   hidePurchased.addEventListener('change', renderShopping);
 
   // ============================
