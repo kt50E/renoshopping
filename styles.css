@@ -803,6 +803,24 @@ body {
   gap: 4px;
 }
 
+.notes-toggle {
+  color: var(--primary-dark);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.notes-full {
+  font-size: 13px;
+  color: var(--gray-600);
+  display: block;
+  margin-top: 4px;
+}
+
+tr.purchased {
+  opacity: 0.5;
+}
+
 .shopping-summary {
   text-align: right;
   padding: 16px 0;

@@ -468,7 +468,7 @@
   const itemModal = document.getElementById('item-modal');
   const itemForm = document.getElementById('item-form');
   const itemModalTitle = document.getElementById('item-modal-title');
-  const shoppingListEl = document.getElementById('shopping-list');
+  const shoppingBody = document.getElementById('shopping-body');
   const shoppingFilterRoom = document.getElementById('shopping-filter-room');
   const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
   const hidePurchased = document.getElementById('hide-purchased');
@@ -513,34 +513,35 @@
     filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
 
     if (filtered.length === 0) {
-      shoppingListEl.innerHTML = '<p class="empty-state">No items to show.</p>';
+      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
     } else {
-      shoppingListEl.innerHTML = filtered.map(item => {
+      shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
         const status = item.status || 'Selected';
         const statusColor = status === 'Purchased' ? 'var(--success)' : 'var(--warning)';
         const statusBg = status === 'Purchased' ? 'var(--success-light)' : 'var(--warning-light)';
+        const notesHtml = item.notes
+          ? `<a href="#" class="notes-toggle" title="${escapeHtml(item.notes)}">Click to read more</a><span class="notes-full" hidden>${escapeHtml(item.notes)}</span>`
+          : '';
         return `
-          <div class="shopping-item ${item.purchased ? 'purchased' : ''}" data-id="${item.id}">
-            <input type="checkbox" class="shopping-item-check" ${item.purchased ? 'checked' : ''}>
-            <div class="shopping-item-info">
-              <div class="shopping-item-name">${escapeHtml(item.name)}</div>
-              <div class="shopping-item-details">
-                <span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || 'No Room')}</span>
-                <span class="category-badge" style="background:#6C63FF20;color:#6C63FF">${escapeHtml(item.material || 'No Type')}</span>
-                ${item.vendor ? `<span class="category-badge" style="background:var(--gray-100);color:var(--gray-600)">${escapeHtml(item.vendor)}</span>` : ''}
-                &nbsp; Qty: ${item.qty || 1}
-                ${item.link ? ` &nbsp; <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View Link</a>` : ''}
-                ${item.notes ? `<br>${escapeHtml(item.notes)}` : ''}
+          <tr data-id="${item.id}" class="${item.purchased ? 'purchased' : ''}">
+            <td><input type="checkbox" class="shopping-item-check" ${item.purchased ? 'checked' : ''}></td>
+            <td>${escapeHtml(item.name || '')}</td>
+            <td><span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || '-')}</span></td>
+            <td><span class="category-badge" style="background:#6C63FF20;color:#6C63FF">${escapeHtml(item.material || '-')}</span></td>
+            <td>${escapeHtml(item.vendor || '-')}</td>
+            <td>${item.qty || 1}</td>
+            <td>${total > 0 ? formatCurrency(total) : '-'}</td>
+            <td><span class="category-badge" style="background:${statusBg};color:${statusColor}">${status}</span></td>
+            <td>${notesHtml || '-'}</td>
+            <td>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View</a>` : '-'}</td>
+            <td>
+              <div style="display:flex;gap:4px">
+                <button class="btn-icon edit-item" title="Edit">✏️</button>
+                <button class="btn-icon delete-item" title="Delete">🗑️</button>
               </div>
-            </div>
-            <span class="category-badge status-badge" style="background:${statusBg};color:${statusColor}">${status}</span>
-            <span class="shopping-item-price">${total > 0 ? formatCurrency(total) : ''}</span>
-            <div class="shopping-item-actions">
-              <button class="btn-icon edit-item" title="Edit">✏️</button>
-              <button class="btn-icon delete-item" title="Delete">🗑️</button>
-            </div>
-          </div>
+            </td>
+          </tr>
         `;
       }).join('');
     }
@@ -552,9 +553,22 @@
     shoppingTotal.textContent = `Estimated Total (unpurchased): ${formatCurrency(unpurchasedTotal)}`;
 
     // Events
-    shoppingListEl.querySelectorAll('.shopping-item-check').forEach(cb => {
+    shoppingBody.querySelectorAll('.notes-toggle').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const full = link.nextElementSibling;
+        if (full.hidden) {
+          full.hidden = false;
+          link.textContent = 'Click to hide';
+        } else {
+          full.hidden = true;
+          link.textContent = 'Click to read more';
+        }
+      });
+    });
+    shoppingBody.querySelectorAll('.shopping-item-check').forEach(cb => {
       cb.addEventListener('change', () => {
-        const id = cb.closest('.shopping-item').dataset.id;
+        const id = cb.closest('tr').dataset.id;
         const item = shoppingItems.find(i => i.id === id);
         if (item) {
           item.purchased = cb.checked;
@@ -565,15 +579,15 @@
         }
       });
     });
-    shoppingListEl.querySelectorAll('.edit-item').forEach(btn => {
+    shoppingBody.querySelectorAll('.edit-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.closest('.shopping-item').dataset.id;
+        const id = btn.closest('tr').dataset.id;
         editItem(id);
       });
     });
-    shoppingListEl.querySelectorAll('.delete-item').forEach(btn => {
+    shoppingBody.querySelectorAll('.delete-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.closest('.shopping-item').dataset.id;
+        const id = btn.closest('tr').dataset.id;
         deleteItem(id);
       });
     });
