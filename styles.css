@@ -6,9 +6,9 @@
 }
 
 :root {
-  --primary: #22C55E;
-  --primary-dark: #16A34A;
-  --primary-light: #DCFCE7;
+  --primary: #A8C5B0;
+  --primary-dark: #2C5F3F;
+  --primary-light: #DFE9E2;
   --success: #1A7F37;
   --success-light: #DAFBE1;
   --warning: #9A6700;
@@ -126,11 +126,12 @@ body {
 
 .btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--primary-dark);
   border-radius: var(--radius);
+  font-weight: 700;
 }
 .btn-primary:hover {
-  background: var(--primary-dark);
+  background: #97B8A0;
 }
 
 .btn-outline {
