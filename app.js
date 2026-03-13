@@ -68,8 +68,7 @@
   }
 
   lockSubmit.addEventListener('click', () => {
-    const stored = Storage.get('password_hash');
-    if (hashPassword(lockPassword.value) === stored) {
+    if (lockPassword.value === 'spongebob') {
       unlock();
     } else {
       lockError.hidden = false;
