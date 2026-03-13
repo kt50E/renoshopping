@@ -102,26 +102,10 @@ body {
   border-color: var(--primary);
 }
 
-.setup-text {
-  font-weight: 600;
-  color: var(--gray-700) !important;
-  margin-top: 8px;
-}
-
 .error-text {
   color: var(--danger);
   font-size: 14px;
   margin-top: 8px;
-}
-
-#lock-setup {
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-#lock-setup:not([hidden]) {
-  display: flex;
 }
 
 /* ===== Buttons ===== */

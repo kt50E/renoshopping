@@ -35,11 +35,6 @@
   const lockPassword = document.getElementById('lock-password');
   const lockSubmit = document.getElementById('lock-submit');
   const lockError = document.getElementById('lock-error');
-  const lockSetup = document.getElementById('lock-setup');
-  const setupPassword = document.getElementById('setup-password');
-  const setupConfirm = document.getElementById('setup-confirm');
-  const setupSubmit = document.getElementById('setup-submit');
-  const setupError = document.getElementById('setup-error');
   const lockBtn = document.getElementById('lock-btn');
 
   function hashPassword(pw) {
@@ -54,17 +49,8 @@
   }
 
   function initLock() {
-    const stored = Storage.get('password_hash');
-    if (!stored) {
-      // First time — show setup
-      lockPassword.parentElement.style.display = 'none';
-      lockSubmit.style.display = 'none';
-      lockSetup.hidden = false;
-    } else {
-      lockPassword.parentElement.style.display = '';
-      lockSubmit.style.display = '';
-      lockSetup.hidden = true;
-    }
+    lockPassword.parentElement.style.display = '';
+    lockSubmit.style.display = '';
   }
 
   function unlock() {
@@ -80,23 +66,6 @@
     lockError.hidden = true;
     initLock();
   }
-
-  setupSubmit.addEventListener('click', () => {
-    const pw = setupPassword.value;
-    const confirm = setupConfirm.value;
-    if (pw.length < 4) {
-      setupError.textContent = 'Password must be at least 4 characters.';
-      setupError.hidden = false;
-      return;
-    }
-    if (pw !== confirm) {
-      setupError.textContent = 'Passwords do not match.';
-      setupError.hidden = false;
-      return;
-    }
-    Storage.set('password_hash', hashPassword(pw));
-    unlock();
-  });
 
   lockSubmit.addEventListener('click', () => {
     const stored = Storage.get('password_hash');
