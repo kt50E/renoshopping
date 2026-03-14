@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  // --- Storage Helpers ---
+  // --- Storage Helpers (localStorage fallback) ---
   const Storage = {
     get(key, fallback = null) {
       try {
@@ -16,6 +16,58 @@
     },
     remove(key) {
       localStorage.removeItem('reno_' + key);
+    }
+  };
+
+  // --- Firebase Init ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyD7Xqxh6d9CcDlFe9jKOTUv8BMx_5nU3fE",
+    authDomain: "renotracker-bbaa2.firebaseapp.com",
+    projectId: "renotracker-bbaa2",
+    storageBucket: "renotracker-bbaa2.firebasestorage.app",
+    messagingSenderId: "1099101874698",
+    appId: "1:1099101874698:web:af6a1f4f51e5efc23acdf3"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // --- Firestore Helpers ---
+  const Firestore = {
+    async loadCollection(name) {
+      try {
+        const snapshot = await db.collection(name).get();
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (err) {
+        console.warn('Firestore load failed for', name, err);
+        return null; // signals caller to use localStorage fallback
+      }
+    },
+    async saveCollection(name, items) {
+      try {
+        const batch = db.batch();
+        // Get all existing docs to detect deletions
+        const snapshot = await db.collection(name).get();
+        const existingIds = new Set(snapshot.docs.map(d => d.id));
+        const newIds = new Set(items.map(i => i.id));
+
+        // Delete docs that no longer exist locally
+        snapshot.docs.forEach(doc => {
+          if (!newIds.has(doc.id)) batch.delete(doc.ref);
+        });
+
+        // Set (upsert) all current items
+        items.forEach(item => {
+          const docRef = db.collection(name).doc(item.id);
+          const data = { ...item };
+          delete data.id; // id is the doc key, not a field
+          batch.set(docRef, data);
+        });
+
+        await batch.commit();
+      } catch (err) {
+        console.warn('Firestore save failed for', name, err);
+      }
     }
   };
 
@@ -170,7 +222,7 @@
   // ============================
   // BUDGETS
   // ============================
-  let budgets = Storage.get('budgets', []);
+  let budgets = [];
 
   const addBudgetBtn = document.getElementById('add-budget-btn');
   const budgetModal = document.getElementById('budget-modal');
@@ -180,6 +232,7 @@
 
   function saveBudgets() {
     Storage.set('budgets', budgets);
+    Firestore.saveCollection('budgets', budgets);
   }
 
   function getBudgetSpent(budgetName) {
@@ -345,7 +398,7 @@
   // ============================
   // EXPENSES
   // ============================
-  let expenses = Storage.get('expenses', []);
+  let expenses = [];
 
   const addExpenseBtn = document.getElementById('add-expense-btn');
   const expenseModal = document.getElementById('expense-modal');
@@ -357,6 +410,7 @@
 
   function saveExpenses() {
     Storage.set('expenses', expenses);
+    Firestore.saveCollection('expenses', expenses);
   }
 
   const expenseCategorySelect = document.getElementById('expense-category');
@@ -506,7 +560,7 @@
   // ============================
   // SHOPPING LIST
   // ============================
-  let shoppingItems = Storage.get('shopping', []);
+  let shoppingItems = [];
 
   const addItemBtn = document.getElementById('add-item-btn');
   const itemModal = document.getElementById('item-modal');
@@ -520,6 +574,7 @@
 
   function saveShoppingItems() {
     Storage.set('shopping', shoppingItems);
+    Firestore.saveCollection('shopping', shoppingItems);
   }
 
   function syncExpenseFromItem(item) {
@@ -825,7 +880,7 @@
         }
 
         renderAll();
-        alert('Data imported successfully!');
+        alert('Data imported and synced to cloud!');
       } catch {
         alert('Invalid file. Please select a valid JSON backup file.');
       }
@@ -834,10 +889,31 @@
     importFile.value = '';
   });
 
-  // --- Auto-unlock if session is still valid (must be after all declarations) ---
-  if (hasValidSession()) {
-    setSession();
-    unlock();
+  // --- Load data from Firestore (with localStorage fallback) then start app ---
+  async function initData() {
+    const [fbBudgets, fbExpenses, fbShopping] = await Promise.all([
+      Firestore.loadCollection('budgets'),
+      Firestore.loadCollection('expenses'),
+      Firestore.loadCollection('shopping')
+    ]);
+
+    // Use Firestore data if available, otherwise fall back to localStorage
+    budgets = fbBudgets || Storage.get('budgets', []);
+    expenses = fbExpenses || Storage.get('expenses', []);
+    shoppingItems = fbShopping || Storage.get('shopping', []);
+
+    // Sync localStorage with whatever we loaded (keeps offline cache fresh)
+    Storage.set('budgets', budgets);
+    Storage.set('expenses', expenses);
+    Storage.set('shopping', shoppingItems);
   }
+
+  initData().then(() => {
+    // Auto-unlock if session is still valid (must be after data is loaded)
+    if (hasValidSession()) {
+      setSession();
+      unlock();
+    }
+  });
 
 })();
