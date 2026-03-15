@@ -907,19 +907,24 @@
     let segments = '';
     let offset = 0;
 
+    // Calculate midpoint angles for each segment (used for pop-out on hover)
+    const segmentData = [];
     categories.forEach((cat, i) => {
       const pct = totalSpent > 0 ? cat.amount / totalSpent : 0;
       const dashLength = pct * circumference;
       const color = CHART_COLORS[i % CHART_COLORS.length];
+      const midAngle = ((offset + dashLength / 2) / circumference) * 2 * Math.PI;
 
       segments += `<circle
         class="donut-segment"
+        data-index="${i}"
         cx="100" cy="100" r="${radius}"
         stroke="${color}"
         stroke-dasharray="${dashLength} ${circumference - dashLength}"
         stroke-dashoffset="${-offset}"
       ><title>${escapeHtml(cat.name)}: ${formatCurrency(cat.amount)} (${(pct * 100).toFixed(1)}%)</title></circle>`;
 
+      segmentData.push({ midAngle });
       offset += dashLength;
     });
 
@@ -929,11 +934,54 @@
     donutLegend.innerHTML = categories.map((cat, i) => {
       const color = CHART_COLORS[i % CHART_COLORS.length];
       const pct = totalSpent > 0 ? ((cat.amount / totalSpent) * 100).toFixed(1) : 0;
-      return `<span class="legend-item">
+      return `<span class="legend-item" data-index="${i}">
         <span class="legend-dot" style="background:${color}"></span>
         ${escapeHtml(cat.name)} <span class="legend-amount">${pct}%</span>
       </span>`;
     }).join('');
+
+    // Hover interaction
+    function highlightSegment(index) {
+      donutSvg.querySelectorAll('.donut-segment').forEach(seg => {
+        const i = parseInt(seg.dataset.index);
+        if (i === index) {
+          seg.classList.add('donut-hover');
+          // Pop out the segment
+          const angle = segmentData[i].midAngle;
+          const tx = Math.cos(angle) * 6;
+          const ty = Math.sin(angle) * 6;
+          seg.style.transform = `translate(${tx}px, ${ty}px)`;
+        } else {
+          seg.classList.add('donut-dimmed');
+          seg.style.transform = '';
+        }
+      });
+      donutLegend.querySelectorAll('.legend-item').forEach(item => {
+        const i = parseInt(item.dataset.index);
+        item.classList.toggle('legend-active', i === index);
+        item.classList.toggle('legend-dimmed', i !== index);
+      });
+    }
+
+    function resetSegments() {
+      donutSvg.querySelectorAll('.donut-segment').forEach(seg => {
+        seg.classList.remove('donut-hover', 'donut-dimmed');
+        seg.style.transform = '';
+      });
+      donutLegend.querySelectorAll('.legend-item').forEach(item => {
+        item.classList.remove('legend-active', 'legend-dimmed');
+      });
+    }
+
+    donutSvg.querySelectorAll('.donut-segment').forEach(seg => {
+      seg.addEventListener('mouseenter', () => highlightSegment(parseInt(seg.dataset.index)));
+      seg.addEventListener('mouseleave', resetSegments);
+    });
+
+    donutLegend.querySelectorAll('.legend-item').forEach(item => {
+      item.addEventListener('mouseenter', () => highlightSegment(parseInt(item.dataset.index)));
+      item.addEventListener('mouseleave', resetSegments);
+    });
 
   }
 
