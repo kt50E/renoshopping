@@ -857,6 +857,7 @@ body {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ===== Shopping List ===== */
