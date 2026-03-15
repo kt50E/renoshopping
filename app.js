@@ -362,7 +362,7 @@
       const color = '#6B7280';
       return `
         <tr data-id="${e.id}">
-          <td>${e.date}</td>
+          <td class="date-cell">${e.date}</td>
           <td>
             ${escapeHtml(e.description)}
             ${e.notes ? `<br><small style="color:var(--gray-400)">${escapeHtml(e.notes)}</small>` : ''}

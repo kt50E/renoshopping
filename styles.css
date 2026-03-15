@@ -831,6 +831,11 @@ body {
   border-bottom: 1px solid var(--gray-100);
 }
 
+.data-table td.date-cell {
+  white-space: nowrap;
+  min-width: 110px;
+}
+
 .data-table tbody tr:hover {
   background: var(--gray-50);
 }
