@@ -1228,7 +1228,7 @@ tr.purchased {
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
   .sidebar {
-    transform: translateX(-100%);
+    transform: translateX(calc(-100% - 24px));
     transition: transform 0.25s ease;
   }
 
