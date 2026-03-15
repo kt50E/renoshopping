@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RenoTracker — Renovation Expense & Shopping Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
 
@@ -440,6 +440,10 @@
                 <option value="Purchased">Purchased</option>
               </select>
             </div>
+            <div class="form-group" id="purchase-date-group" hidden>
+              <label for="item-purchase-date">Purchase Date</label>
+              <input type="date" id="item-purchase-date">
+            </div>
             <div class="form-group">
               <label for="item-notes">Notes (optional)</label>
               <textarea id="item-notes" rows="2" placeholder="Size, color, store..."></textarea>
@@ -484,6 +488,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

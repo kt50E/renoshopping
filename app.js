@@ -458,6 +458,22 @@
   const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
   const hidePurchased = document.getElementById('hide-purchased');
   const shoppingTotal = document.getElementById('shopping-total');
+  const itemStatus = document.getElementById('item-status');
+  const purchaseDateGroup = document.getElementById('purchase-date-group');
+  const itemPurchaseDate = document.getElementById('item-purchase-date');
+
+  function togglePurchaseDate() {
+    if (itemStatus.value === 'Purchased') {
+      purchaseDateGroup.hidden = false;
+      if (!itemPurchaseDate.value) {
+        itemPurchaseDate.value = new Date().toISOString().split('T')[0];
+      }
+    } else {
+      purchaseDateGroup.hidden = true;
+    }
+  }
+
+  itemStatus.addEventListener('change', togglePurchaseDate);
 
   function saveShoppingItems() {
     Storage.set('shopping', shoppingItems);
@@ -474,7 +490,7 @@
       expenses.push({
         id: uuid(),
         shoppingItemId: item.id,
-        date: new Date().toISOString().split('T')[0],
+        date: item.purchaseDate || new Date().toISOString().split('T')[0],
         description: item.name,
         category: item.room || '',
         amount: total,
@@ -581,6 +597,8 @@
     itemModalTitle.textContent = 'Add Item';
     itemForm.reset();
     document.getElementById('item-id').value = '';
+    purchaseDateGroup.hidden = true;
+    itemPurchaseDate.value = '';
     resetImageUpload();
     openModal(itemModal);
   });
@@ -596,9 +614,11 @@
     document.getElementById('item-qty').value = item.qty || 1;
     document.getElementById('item-price').value = item.price || '';
     document.getElementById('item-link').value = item.link || '';
-    document.getElementById('item-status').value = item.status || 'Selected';
+    document.getElementById('item-status').value = item.status || 'Wishlist';
     document.getElementById('item-notes').value = item.notes || '';
     document.getElementById('item-id').value = item.id;
+    itemPurchaseDate.value = item.purchaseDate || '';
+    togglePurchaseDate();
 
     // Load existing image
     resetImageUpload();
@@ -632,12 +652,14 @@
       price: parseFloat(document.getElementById('item-price').value) || 0,
       link: document.getElementById('item-link').value.trim(),
       status: document.getElementById('item-status').value,
-      notes: document.getElementById('item-notes').value.trim()
+      notes: document.getElementById('item-notes').value.trim(),
+      purchaseDate: itemStatus.value === 'Purchased' ? itemPurchaseDate.value : ''
     };
 
     let savedItem;
     if (id) {
       savedItem = shoppingItems.find(x => x.id === id);
+      const wasPurchased = savedItem && savedItem.purchased;
       if (savedItem) Object.assign(savedItem, data);
     } else {
       savedItem = { id: uuid(), purchased: data.status === 'Purchased', ...data };
