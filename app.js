@@ -289,6 +289,34 @@
   });
 
   // ============================
+  // SORT HELPERS
+  // ============================
+  let expenseSort = { key: 'date', dir: 'desc' };
+  let shoppingSort = { key: null, dir: 'asc' };
+
+  const STATUS_ORDER = { 'Wishlist': 0, 'Selected': 1, 'Purchased': 2 };
+
+  function updateSortHeaders(tableSelector, sortState) {
+    document.querySelectorAll(`${tableSelector} th.sortable`).forEach(th => {
+      const isActive = th.dataset.sort === sortState.key;
+      th.classList.toggle('sort-active', isActive);
+      const arrow = th.querySelector('.sort-arrow');
+      if (arrow) {
+        arrow.textContent = isActive ? (sortState.dir === 'asc' ? '▲' : '▼') : '▲▼';
+      }
+    });
+  }
+
+  function toggleSort(sortState, key) {
+    if (sortState.key === key) {
+      sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortState.key = key;
+      sortState.dir = 'asc';
+    }
+  }
+
+  // ============================
   // EXPENSES
   // ============================
   let expenses = [];
@@ -350,8 +378,15 @@
       (e.notes || '').toLowerCase().includes(search)
     );
 
-    // Sort by date descending
-    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort
+    const eDir = expenseSort.dir === 'asc' ? 1 : -1;
+    if (expenseSort.key === 'date') {
+      filtered.sort((a, b) => eDir * (new Date(a.date) - new Date(b.date)));
+    } else if (expenseSort.key === 'amount') {
+      filtered.sort((a, b) => eDir * (Number(a.amount) - Number(b.amount)));
+    }
+
+    updateSortHeaders('#tab-expenses', expenseSort);
 
     if (filtered.length === 0) {
       expensesBody.innerHTML = '<tr class="empty-row"><td colspan="5">No expenses found.</td></tr>';
@@ -449,6 +484,13 @@
   expenseFilterCat.addEventListener('change', renderExpenses);
   expenseSearch.addEventListener('input', renderExpenses);
 
+  document.querySelectorAll('#tab-expenses th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      toggleSort(expenseSort, th.dataset.sort);
+      renderExpenses();
+    });
+  });
+
   // ============================
   // SHOPPING LIST
   // ============================
@@ -516,8 +558,27 @@
     if (filterMaterial) filtered = filtered.filter(i => i.material === filterMaterial);
     if (hideChecked) filtered = filtered.filter(i => !i.purchased);
 
-    // Sort: unpurchased first
-    filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
+    // Sort
+    if (shoppingSort.key) {
+      const sDir = shoppingSort.dir === 'asc' ? 1 : -1;
+      filtered.sort((a, b) => {
+        if (shoppingSort.key === 'name') {
+          return sDir * (a.name || '').localeCompare(b.name || '');
+        } else if (shoppingSort.key === 'room') {
+          return sDir * (a.room || '').localeCompare(b.room || '');
+        } else if (shoppingSort.key === 'total') {
+          return sDir * (((a.qty || 1) * (a.price || 0)) - ((b.qty || 1) * (b.price || 0)));
+        } else if (shoppingSort.key === 'status') {
+          return sDir * ((STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0));
+        }
+        return 0;
+      });
+    } else {
+      // Default: unpurchased first
+      filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
+    }
+
+    updateSortHeaders('#tab-shopping', shoppingSort);
 
     if (filtered.length === 0) {
       shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
@@ -699,6 +760,13 @@
   shoppingFilterRoom.addEventListener('change', renderShopping);
   shoppingFilterMaterial.addEventListener('change', renderShopping);
   hidePurchased.addEventListener('change', renderShopping);
+
+  document.querySelectorAll('#tab-shopping th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      toggleSort(shoppingSort, th.dataset.sort);
+      renderShopping();
+    });
+  });
 
   // ============================
   // RENDER ALL

@@ -825,6 +825,28 @@ body {
   border-bottom: 1px solid var(--gray-200);
 }
 
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition);
+}
+
+.data-table th.sortable:hover {
+  color: var(--gray-800);
+}
+
+.sort-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.4;
+}
+
+.data-table th.sortable.sort-active .sort-arrow {
+  opacity: 1;
+  color: var(--primary-dark);
+}
+
 .data-table td {
   padding: 14px 16px;
   font-size: 14px;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RenoTracker — Renovation Expense & Shopping Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
 
@@ -192,10 +192,10 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>Date</th>
+              <th class="sortable" data-sort="date">Date <span class="sort-arrow">▲▼</span></th>
               <th>Description</th>
               <th>Category</th>
-              <th>Amount</th>
+              <th class="sortable" data-sort="amount">Amount <span class="sort-arrow">▲▼</span></th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -325,13 +325,13 @@
           <thead>
             <tr>
               <th>Image</th>
-              <th>Item</th>
-              <th>Room</th>
+              <th class="sortable" data-sort="name">Item <span class="sort-arrow">▲▼</span></th>
+              <th class="sortable" data-sort="room">Room <span class="sort-arrow">▲▼</span></th>
               <th>Type</th>
               <th>Vendor</th>
               <th>Qty</th>
-              <th>Total</th>
-              <th>Status</th>
+              <th class="sortable" data-sort="total">Total <span class="sort-arrow">▲▼</span></th>
+              <th class="sortable" data-sort="status">Status <span class="sort-arrow">▲▼</span></th>
               <th>Notes</th>
               <th>Link</th>
               <th>Actions</th>
@@ -488,6 +488,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
