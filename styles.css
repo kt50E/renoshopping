@@ -1071,8 +1071,8 @@ tr.purchased {
 
 /* ===== Table Thumbnail ===== */
 .item-thumbnail {
-  width: 48px;
-  height: 48px;
+  width: 80px;
+  height: 80px;
   border-radius: var(--radius);
   object-fit: cover;
   cursor: pointer;
@@ -1086,8 +1086,8 @@ tr.purchased {
 }
 
 .item-thumbnail-placeholder {
-  width: 48px;
-  height: 48px;
+  width: 80px;
+  height: 80px;
   border-radius: var(--radius);
   background: var(--gray-100);
   display: flex;
