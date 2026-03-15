@@ -220,177 +220,65 @@
   });
 
   // ============================
-  // BUDGETS
+  // BUDGET (single total)
   // ============================
-  let budgets = [];
+  let totalBudgetAmount = 0;
 
-  const addBudgetBtn = document.getElementById('add-budget-btn');
+  const editBudgetBtn = document.getElementById('edit-budget-btn');
   const budgetModal = document.getElementById('budget-modal');
   const budgetForm = document.getElementById('budget-form');
-  const budgetModalTitle = document.getElementById('budget-modal-title');
-  const budgetList = document.getElementById('budget-list');
+  const budgetProgress = document.getElementById('budget-progress');
 
-  function saveBudgets() {
-    Storage.set('budgets', budgets);
-    Firestore.saveCollection('budgets', budgets);
-  }
-
-  function getBudgetSpent(budgetName) {
-    return expenses
-      .filter(e => e.category === budgetName)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+  function saveBudget() {
+    Storage.set('totalBudget', totalBudgetAmount);
+    Firestore.saveCollection('budgets', [{ id: 'total', amount: totalBudgetAmount }]);
   }
 
   function renderBudgets() {
-    const totalBudget = budgets.reduce((s, b) => s + Number(b.amount), 0);
     const totalSpent = expenses.reduce((s, e) => s + Number(e.amount), 0);
-    const remaining = totalBudget - totalSpent;
+    const remaining = totalBudgetAmount - totalSpent;
 
-    document.getElementById('total-budget').textContent = formatCurrency(totalBudget);
+    // Motivational message
+    const msg = getBudgetMessage();
+    document.getElementById('budget-message').innerHTML =
+      `<span class="budget-message-icon">${msg.icon}</span> ${escapeHtml(msg.text)}`;
+
+    document.getElementById('total-budget').textContent = formatCurrency(totalBudgetAmount);
     document.getElementById('total-spent').textContent = formatCurrency(totalSpent);
 
     const remEl = document.getElementById('total-remaining');
     remEl.textContent = formatCurrency(remaining);
     remEl.className = 'summary-value ' + (remaining < 0 ? 'over-budget' : 'under-budget');
 
-    if (budgets.length === 0) {
-      budgetList.innerHTML = '<p class="empty-state">No budgets yet. Add a budget to get started!</p>';
+    if (totalBudgetAmount === 0) {
+      budgetProgress.innerHTML = '<p class="empty-state">Set your total renovation budget to track spending.</p>';
       return;
     }
 
-    budgetList.innerHTML = budgets.map(b => {
-      const spent = getBudgetSpent(b.name);
-      const pct = b.amount > 0 ? Math.min((spent / b.amount) * 100, 100) : 0;
-      const over = spent > b.amount;
-      const actualPct = b.amount > 0 ? ((spent / b.amount) * 100).toFixed(1) : 0;
+    const pct = Math.min((totalSpent / totalBudgetAmount) * 100, 100);
+    const actualPct = ((totalSpent / totalBudgetAmount) * 100).toFixed(1);
+    const over = totalSpent > totalBudgetAmount;
 
-      return `
-        <div class="budget-item" data-id="${b.id}">
-          <div class="budget-item-header">
-            <span class="budget-item-name">
-              <span class="budget-color-dot" style="background:${b.color}"></span>
-              ${escapeHtml(b.name)}
-            </span>
-            <span class="budget-item-amounts">
-              <strong>${formatCurrency(spent)}</strong> of ${formatCurrency(b.amount)}
-            </span>
-          </div>
-          <div class="budget-bar-track">
-            <div class="budget-bar-fill ${over ? 'over' : ''}" style="width:${pct}%;background:${over ? '' : b.color}"></div>
-          </div>
-          <div class="budget-item-footer">
-            <span class="budget-percent" style="color:${over ? 'var(--danger)' : b.color}">${actualPct}%</span>
-            <div class="budget-actions">
-              <button class="btn-icon edit-budget" title="Edit">✏️</button>
-              <button class="btn-icon delete-budget" title="Delete">🗑️</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Attach budget action events
-    budgetList.querySelectorAll('.edit-budget').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.closest('.budget-item').dataset.id;
-        editBudget(id);
-      });
-    });
-    budgetList.querySelectorAll('.delete-budget').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.closest('.budget-item').dataset.id;
-        deleteBudget(id);
-      });
-    });
+    budgetProgress.innerHTML = `
+      <div class="budget-progress-header">
+        <span class="budget-progress-label">${formatCurrency(totalSpent)} spent of ${formatCurrency(totalBudgetAmount)}</span>
+        <span class="budget-progress-percent" style="color:${over ? 'var(--danger)' : 'var(--success)'}">${actualPct}%</span>
+      </div>
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill ${over ? 'over' : ''}" style="width:${pct}%"></div>
+      </div>
+    `;
   }
 
-  const budgetNameSelect = document.getElementById('budget-name');
-  const budgetNameCustom = document.getElementById('budget-name-custom');
-
-  budgetNameSelect.addEventListener('change', () => {
-    if (budgetNameSelect.value === 'custom') {
-      budgetNameCustom.style.display = '';
-      budgetNameCustom.focus();
-    } else {
-      budgetNameCustom.style.display = 'none';
-      budgetNameCustom.value = '';
-    }
-  });
-
-  function getBudgetNameValue() {
-    return budgetNameSelect.value === 'custom'
-      ? budgetNameCustom.value.trim()
-      : budgetNameSelect.value;
-  }
-
-  function setBudgetNameValue(name) {
-    // Check if name matches an existing option
-    const option = Array.from(budgetNameSelect.options).find(o => o.value === name);
-    if (option) {
-      budgetNameSelect.value = name;
-      budgetNameCustom.style.display = 'none';
-      budgetNameCustom.value = '';
-    } else {
-      budgetNameSelect.value = 'custom';
-      budgetNameCustom.style.display = '';
-      budgetNameCustom.value = name;
-    }
-  }
-
-  addBudgetBtn.addEventListener('click', () => {
-    budgetModalTitle.textContent = 'Add Budget';
-    budgetForm.reset();
-    document.getElementById('budget-id').value = '';
-    document.getElementById('budget-color').value = '#6C63FF';
-    budgetNameCustom.style.display = 'none';
-    budgetNameCustom.value = '';
+  editBudgetBtn.addEventListener('click', () => {
+    document.getElementById('budget-amount').value = totalBudgetAmount || '';
     openModal(budgetModal);
   });
-
-  function editBudget(id) {
-    const b = budgets.find(x => x.id === id);
-    if (!b) return;
-    budgetModalTitle.textContent = 'Edit Budget';
-    setBudgetNameValue(b.name);
-    document.getElementById('budget-amount').value = b.amount;
-    document.getElementById('budget-color').value = b.color;
-    document.getElementById('budget-id').value = b.id;
-    openModal(budgetModal);
-  }
-
-  function deleteBudget(id) {
-    if (!confirm('Delete this budget? Expenses in this category will remain.')) return;
-    budgets = budgets.filter(b => b.id !== id);
-    saveBudgets();
-    renderAll();
-  }
 
   budgetForm.addEventListener('submit', (e) => {
     e.preventDefault();
-    const id = document.getElementById('budget-id').value;
-    const name = getBudgetNameValue();
-    const amount = parseFloat(document.getElementById('budget-amount').value);
-    const color = document.getElementById('budget-color').value;
-
-    if (id) {
-      const b = budgets.find(x => x.id === id);
-      if (b) {
-        // Update expense categories if name changed
-        if (b.name !== name) {
-          expenses.forEach(exp => {
-            if (exp.category === b.name) exp.category = name;
-          });
-          saveExpenses();
-        }
-        b.name = name;
-        b.amount = amount;
-        b.color = color;
-      }
-    } else {
-      budgets.push({ id: uuid(), name, amount, color });
-    }
-
-    saveBudgets();
+    totalBudgetAmount = parseFloat(document.getElementById('budget-amount').value) || 0;
+    saveBudget();
     closeModal(budgetModal);
     renderAll();
   });
@@ -612,19 +500,24 @@
     filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
 
     if (filtered.length === 0) {
-      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
+      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="12">No items to show.</td></tr>';
     } else {
       shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
-        const status = item.status || 'Selected';
-        const statusColor = status === 'Purchased' ? 'var(--success)' : 'var(--warning)';
-        const statusBg = status === 'Purchased' ? 'var(--success-light)' : 'var(--warning-light)';
+        const status = item.status || 'Wishlist';
+        const statusColor = status === 'Purchased' ? 'var(--success)' : status === 'Selected' ? 'var(--warning)' : '#8B5CF6';
+        const statusBg = status === 'Purchased' ? 'var(--success-light)' : status === 'Selected' ? 'var(--warning-light)' : '#F3EEFF';
         const notesHtml = item.notes
           ? `<a href="#" class="notes-toggle" title="${escapeHtml(item.notes)}">Click to read more</a><span class="notes-full" hidden>${escapeHtml(item.notes)}</span>`
           : '';
+        const imgHtml = item.imageUrl
+          ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
+          : `<div class="item-thumbnail-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+
         return `
           <tr data-id="${item.id}" class="${item.purchased ? 'purchased' : ''}">
             <td><input type="checkbox" class="shopping-item-check" ${item.purchased ? 'checked' : ''}></td>
+            <td>${imgHtml}</td>
             <td>${escapeHtml(item.name || '')}</td>
             <td><span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || '-')}</span></td>
             <td><span class="category-badge" style="background:#6C63FF20;color:#6C63FF">${escapeHtml(item.material || '-')}</span></td>
@@ -670,11 +563,13 @@
         const id = cb.closest('tr').dataset.id;
         const item = shoppingItems.find(i => i.id === id);
         if (item) {
+          const justPurchased = cb.checked && !item.purchased;
           item.purchased = cb.checked;
           item.status = cb.checked ? 'Purchased' : 'Selected';
           saveShoppingItems();
           syncExpenseFromItem(item);
           renderAll();
+          if (justPurchased) launchConfetti();
         }
       });
     });
@@ -690,12 +585,20 @@
         deleteItem(id);
       });
     });
+
+    // Thumbnail click → lightbox
+    shoppingBody.querySelectorAll('.item-thumbnail').forEach(img => {
+      img.addEventListener('click', () => {
+        openLightbox(img.dataset.fullSrc);
+      });
+    });
   }
 
   addItemBtn.addEventListener('click', () => {
     itemModalTitle.textContent = 'Add Item';
     itemForm.reset();
     document.getElementById('item-id').value = '';
+    resetImageUpload();
     openModal(itemModal);
   });
 
@@ -713,6 +616,14 @@
     document.getElementById('item-status').value = item.status || 'Selected';
     document.getElementById('item-notes').value = item.notes || '';
     document.getElementById('item-id').value = item.id;
+
+    // Load existing image
+    resetImageUpload();
+    if (item.imageUrl) {
+      existingImageUrl = item.imageUrl;
+      showImagePreview(item.imageUrl);
+    }
+
     openModal(itemModal);
   }
 
@@ -727,6 +638,7 @@
 
   itemForm.addEventListener('submit', (e) => {
     e.preventDefault();
+
     const id = document.getElementById('item-id').value;
     const data = {
       name: document.getElementById('item-name').value.trim(),
@@ -750,10 +662,19 @@
     }
     savedItem.purchased = savedItem.status === 'Purchased';
 
+    // Handle image data
+    if (pendingImageData) {
+      savedItem.imageUrl = pendingImageData;
+    } else if (imageRemoved) {
+      savedItem.imageUrl = '';
+    }
+
+    const justPurchased = savedItem.purchased && data.status === 'Purchased';
     saveShoppingItems();
     syncExpenseFromItem(savedItem);
     closeModal(itemModal);
     renderAll();
+    if (justPurchased) launchConfetti();
   });
 
   shoppingFilterRoom.addEventListener('change', renderShopping);
@@ -763,10 +684,194 @@
   // ============================
   // RENDER ALL
   // ============================
+  // ============================
+  // CONFETTI
+  // ============================
+  function launchConfetti() {
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    const colors = ['#A8C5B0', '#FFD700', '#FFC0CB', '#6C63FF', '#F59E0B', '#EC4899', '#14B8A6'];
+    const pieces = [];
+
+    for (let i = 0; i < 80; i++) {
+      pieces.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+        y: canvas.height / 2,
+        vx: (Math.random() - 0.5) * 16,
+        vy: Math.random() * -14 - 4,
+        size: Math.random() * 8 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        rotSpeed: (Math.random() - 0.5) * 12,
+        shape: Math.random() > 0.5 ? 'rect' : 'circle',
+        opacity: 1
+      });
+    }
+
+    let frame = 0;
+    const maxFrames = 90;
+
+    function animate() {
+      frame++;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      pieces.forEach(p => {
+        p.x += p.vx;
+        p.vy += 0.35;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.opacity = Math.max(0, 1 - (frame / maxFrames));
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.globalAlpha = p.opacity;
+        ctx.fillStyle = p.color;
+
+        if (p.shape === 'rect') {
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      if (frame < maxFrames) {
+        requestAnimationFrame(animate);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+
+  // ============================
+  // MOTIVATIONAL MESSAGES
+  // ============================
+  function getBudgetMessage() {
+    const totalSpent = expenses.reduce((s, e) => s + Number(e.amount), 0);
+
+    if (totalBudgetAmount === 0 && totalSpent === 0) {
+      return { text: "Fresh start! Let's make this house a home.", icon: "🏡" };
+    }
+    if (totalBudgetAmount === 0 && totalSpent > 0) {
+      return { text: "You're spending — set a budget to keep track!", icon: "📋" };
+    }
+
+    const pct = (totalSpent / totalBudgetAmount) * 100;
+
+    if (pct === 0) return { text: "Budget set! Time to make some moves.", icon: "🎯" };
+    if (pct < 25) return { text: "Off to a great start — plenty of room!", icon: "🌱" };
+    if (pct < 50) return { text: "Looking good! Plenty of room to breathe.", icon: "😊" };
+    if (pct < 75) return { text: "Making moves! Keep an eye on the finish line.", icon: "🏃" };
+    if (pct < 90) return { text: "Getting close — every dollar counts now!", icon: "👀" };
+    if (pct < 100) return { text: "Almost at the limit... choose wisely!", icon: "🤞" };
+    return { text: "Over budget — but hey, renovations have a mind of their own!", icon: "🙈" };
+  }
+
+  // ============================
+  // SPENDING CHARTS
+  // ============================
+  const CHART_COLORS = [
+    '#A8C5B0', '#6C63FF', '#F59E0B', '#EC4899', '#14B8A6',
+    '#8B5CF6', '#EF4444', '#3B82F6', '#F97316', '#06B6D4',
+    '#84CC16', '#E879F9', '#FB923C', '#2DD4BF', '#A78BFA'
+  ];
+
+  function getSpendingByCategory() {
+    const map = {};
+    expenses.forEach(e => {
+      const cat = e.category || 'Uncategorized';
+      map[cat] = (map[cat] || 0) + Number(e.amount);
+    });
+    // Sort by amount descending
+    return Object.entries(map)
+      .map(([name, amount]) => ({ name, amount }))
+      .sort((a, b) => b.amount - a.amount);
+  }
+
+  function renderCharts() {
+    const chartsEl = document.getElementById('spending-charts');
+    const categories = getSpendingByCategory();
+    const totalSpent = categories.reduce((s, c) => s + c.amount, 0);
+
+    if (categories.length === 0) {
+      chartsEl.hidden = true;
+      return;
+    }
+    chartsEl.hidden = false;
+
+    // --- Donut Chart (SVG) ---
+    const donutSvg = document.getElementById('donut-chart');
+    const donutLegend = document.getElementById('donut-legend');
+    const donutCenterAmount = document.getElementById('donut-center-amount');
+    const radius = 84;
+    const circumference = 2 * Math.PI * radius;
+
+    donutCenterAmount.textContent = formatCurrency(totalSpent);
+
+    let segments = '';
+    let offset = 0;
+
+    categories.forEach((cat, i) => {
+      const pct = totalSpent > 0 ? cat.amount / totalSpent : 0;
+      const dashLength = pct * circumference;
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+
+      segments += `<circle
+        class="donut-segment"
+        cx="100" cy="100" r="${radius}"
+        stroke="${color}"
+        stroke-dasharray="${dashLength} ${circumference - dashLength}"
+        stroke-dashoffset="${-offset}"
+      ><title>${escapeHtml(cat.name)}: ${formatCurrency(cat.amount)} (${(pct * 100).toFixed(1)}%)</title></circle>`;
+
+      offset += dashLength;
+    });
+
+    donutSvg.innerHTML = segments;
+
+    // Legend
+    donutLegend.innerHTML = categories.map((cat, i) => {
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+      const pct = totalSpent > 0 ? ((cat.amount / totalSpent) * 100).toFixed(1) : 0;
+      return `<span class="legend-item">
+        <span class="legend-dot" style="background:${color}"></span>
+        ${escapeHtml(cat.name)} <span class="legend-amount">${pct}%</span>
+      </span>`;
+    }).join('');
+
+    // --- Horizontal Bar Chart ---
+    const barChart = document.getElementById('bar-chart');
+    const maxAmount = categories.length > 0 ? categories[0].amount : 1;
+
+    barChart.innerHTML = categories.map((cat, i) => {
+      const color = CHART_COLORS[i % CHART_COLORS.length];
+      const widthPct = maxAmount > 0 ? (cat.amount / maxAmount) * 100 : 0;
+      return `<div class="bar-item">
+        <div class="bar-label-row">
+          <span class="bar-label">${escapeHtml(cat.name)}</span>
+          <span class="bar-amount">${formatCurrency(cat.amount)}</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${widthPct}%;background:${color}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   function renderAll() {
     renderBudgets();
     renderExpenses();
     renderShopping();
+    renderCharts();
   }
 
   // ============================
@@ -777,6 +882,136 @@
     div.textContent = text;
     return div.innerHTML;
   }
+
+  // ============================
+  // IMAGE HANDLING
+  // ============================
+  const MAX_IMAGE_WIDTH = 600;
+  const IMAGE_QUALITY = 0.6;
+
+  function compressImageToBase64(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+
+          if (width > MAX_IMAGE_WIDTH) {
+            height = Math.round((height * MAX_IMAGE_WIDTH) / width);
+            width = MAX_IMAGE_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Return as base64 data URL string (stored directly in Firestore)
+          const dataUrl = canvas.toDataURL('image/jpeg', IMAGE_QUALITY);
+          resolve(dataUrl);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // --- Image Upload UI ---
+  const imageUploadZone = document.getElementById('image-upload-zone');
+  const imageFileInput = document.getElementById('item-image-input');
+  const imageUploadPlaceholder = document.getElementById('image-upload-placeholder');
+  const imageUploadPreview = document.getElementById('image-upload-preview');
+  const imagePreviewImg = document.getElementById('image-preview-img');
+  const imageRemoveBtn = document.getElementById('image-remove-btn');
+
+  let pendingImageData = null;   // new base64 image to save
+  let existingImageUrl = null;   // current image data from Firestore
+  let imageRemoved = false;      // user explicitly removed the image
+
+  function resetImageUpload() {
+    pendingImageData = null;
+    existingImageUrl = null;
+    imageRemoved = false;
+    imageUploadPlaceholder.hidden = false;
+    imageUploadPreview.hidden = true;
+    imagePreviewImg.src = '';
+    imageFileInput.value = '';
+  }
+
+  function showImagePreview(src) {
+    imagePreviewImg.src = src;
+    imageUploadPlaceholder.hidden = true;
+    imageUploadPreview.hidden = false;
+  }
+
+  function handleImageFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    compressImageToBase64(file).then(dataUrl => {
+      pendingImageData = dataUrl;
+      imageRemoved = false;
+      showImagePreview(dataUrl);
+    });
+  }
+
+  imageUploadZone.addEventListener('click', (e) => {
+    if (e.target.closest('.image-remove-btn')) return;
+    imageFileInput.click();
+  });
+
+  imageFileInput.addEventListener('change', () => {
+    if (imageFileInput.files[0]) handleImageFile(imageFileInput.files[0]);
+  });
+
+  // Drag & drop
+  imageUploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    imageUploadZone.classList.add('dragover');
+  });
+
+  imageUploadZone.addEventListener('dragleave', () => {
+    imageUploadZone.classList.remove('dragover');
+  });
+
+  imageUploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    imageUploadZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageFile(file);
+  });
+
+  imageRemoveBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    pendingImageData = null;
+    imageRemoved = true;
+    imageUploadPlaceholder.hidden = false;
+    imageUploadPreview.hidden = true;
+    imagePreviewImg.src = '';
+    imageFileInput.value = '';
+  });
+
+  // --- Lightbox ---
+  const lightbox = document.getElementById('image-lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxClose = document.getElementById('lightbox-close');
+  const lightboxBackdrop = lightbox.querySelector('.lightbox-backdrop');
+
+  function openLightbox(src) {
+    lightboxImg.src = src;
+    lightbox.hidden = false;
+  }
+
+  function closeLightbox() {
+    lightbox.hidden = true;
+    lightboxImg.src = '';
+  }
+
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightboxBackdrop.addEventListener('click', closeLightbox);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !lightbox.hidden) closeLightbox();
+  });
 
   // ============================
   // EXPORT / IMPORT
@@ -804,7 +1039,7 @@
 
   // --- JSON Export ---
   document.getElementById('export-json').addEventListener('click', () => {
-    const data = { budgets, expenses, shoppingItems };
+    const data = { totalBudgetAmount, expenses, shoppingItems };
     downloadFile(
       `renotracker-backup-${getTimestamp()}.json`,
       JSON.stringify(data, null, 2),
@@ -827,11 +1062,9 @@
     let csv = '';
 
     // Budgets sheet
-    csv += '--- BUDGETS ---\n';
-    csv += toCsvRow(['Category', 'Budget Amount', 'Color']) + '\n';
-    budgets.forEach(b => {
-      csv += toCsvRow([b.name, b.amount, b.color]) + '\n';
-    });
+    csv += '--- BUDGET ---\n';
+    csv += toCsvRow(['Total Budget']) + '\n';
+    csv += toCsvRow([totalBudgetAmount]) + '\n';
 
     csv += '\n--- EXPENSES ---\n';
     csv += toCsvRow(['Date', 'Description', 'Category', 'Amount', 'Notes']) + '\n';
@@ -866,9 +1099,13 @@
         const data = JSON.parse(ev.target.result);
         if (!confirm('This will replace all your current data. Continue?')) return;
 
-        if (Array.isArray(data.budgets)) {
-          budgets = data.budgets;
-          saveBudgets();
+        if (typeof data.totalBudgetAmount === 'number') {
+          totalBudgetAmount = data.totalBudgetAmount;
+          saveBudget();
+        } else if (Array.isArray(data.budgets)) {
+          // Backwards compatibility: sum old per-category budgets
+          totalBudgetAmount = data.budgets.reduce((s, b) => s + Number(b.amount || 0), 0);
+          saveBudget();
         }
         if (Array.isArray(data.expenses)) {
           expenses = data.expenses;
@@ -898,12 +1135,23 @@
     ]);
 
     // Use Firestore data if available, otherwise fall back to localStorage
-    budgets = fbBudgets || Storage.get('budgets', []);
+    if (fbBudgets && fbBudgets.length > 0) {
+      // New format: single total budget doc
+      const totalDoc = fbBudgets.find(b => b.id === 'total');
+      if (totalDoc) {
+        totalBudgetAmount = Number(totalDoc.amount) || 0;
+      } else {
+        // Backwards compatibility: sum old per-category budgets
+        totalBudgetAmount = fbBudgets.reduce((s, b) => s + Number(b.amount || 0), 0);
+      }
+    } else {
+      totalBudgetAmount = Storage.get('totalBudget', 0);
+    }
     expenses = fbExpenses || Storage.get('expenses', []);
     shoppingItems = fbShopping || Storage.get('shopping', []);
 
     // Sync localStorage with whatever we loaded (keeps offline cache fresh)
-    Storage.set('budgets', budgets);
+    Storage.set('totalBudget', totalBudgetAmount);
     Storage.set('expenses', expenses);
     Storage.set('shopping', shoppingItems);
   }
