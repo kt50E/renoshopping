@@ -499,7 +499,7 @@
     filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
 
     if (filtered.length === 0) {
-      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="12">No items to show.</td></tr>';
+      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
     } else {
       shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
@@ -515,7 +515,6 @@
 
         return `
           <tr data-id="${item.id}" class="${item.purchased ? 'purchased' : ''}">
-            <td><input type="checkbox" class="shopping-item-check" ${item.purchased ? 'checked' : ''}></td>
             <td>${imgHtml}</td>
             <td>${escapeHtml(item.name || '')}</td>
             <td><span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || '-')}</span></td>
@@ -554,21 +553,6 @@
         } else {
           full.hidden = true;
           link.textContent = 'Click to read more';
-        }
-      });
-    });
-    shoppingBody.querySelectorAll('.shopping-item-check').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const id = cb.closest('tr').dataset.id;
-        const item = shoppingItems.find(i => i.id === id);
-        if (item) {
-          const justPurchased = cb.checked && !item.purchased;
-          item.purchased = cb.checked;
-          item.status = cb.checked ? 'Purchased' : 'Selected';
-          saveShoppingItems();
-          syncExpenseFromItem(item);
-          renderAll();
-          if (justPurchased) launchConfetti();
         }
       });
     });
