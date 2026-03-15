@@ -354,8 +354,7 @@
     }
 
     expensesBody.innerHTML = filtered.map(e => {
-      const budget = budgets.find(b => b.name === e.category);
-      const color = budget ? budget.color : '#6B7280';
+      const color = '#6B7280';
       return `
         <tr data-id="${e.id}">
           <td>${e.date}</td>
