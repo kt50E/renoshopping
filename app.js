@@ -108,6 +108,8 @@
   function unlock() {
     lockScreen.hidden = true;
     app.hidden = false;
+    const lastTab = Storage.get('activeTab', 'dashboard');
+    switchTab(lastTab);
     renderAll();
   }
 
@@ -165,17 +167,20 @@
     shopping: 'Shopping List'
   };
 
+  function switchTab(tabName) {
+    navBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    tabs.forEach(t => {
+      t.hidden = t.id !== 'tab-' + tabName;
+      if (!t.hidden) t.classList.add('active');
+      else t.classList.remove('active');
+    });
+    topbarTitle.textContent = tabTitles[tabName] || tabName;
+    Storage.set('activeTab', tabName);
+  }
+
   navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const tabName = btn.dataset.tab;
-      navBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      tabs.forEach(t => {
-        t.hidden = t.id !== 'tab-' + tabName;
-        if (!t.hidden) t.classList.add('active');
-        else t.classList.remove('active');
-      });
-      topbarTitle.textContent = tabTitles[tabName] || tabName;
+      switchTab(btn.dataset.tab);
       // Close mobile sidebar
       document.querySelector('.sidebar').classList.remove('open');
       document.getElementById('sidebar-overlay').classList.remove('open');
