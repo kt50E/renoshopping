@@ -958,18 +958,30 @@ body {
   gap: 4px;
 }
 
-.notes-toggle {
-  color: var(--primary-dark);
+.notes-first-line {
+  display: block;
   font-size: 13px;
+  color: var(--gray-700);
+}
+
+.notes-toggle {
+  display: block;
+  color: var(--primary-dark);
+  font-size: 12px;
   cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.notes-toggle:hover {
   text-decoration: underline;
 }
 
 .notes-full {
   font-size: 13px;
-  color: var(--gray-600);
-  display: block;
-  margin-top: 4px;
+  color: var(--gray-700);
+  line-height: 1.5;
 }
 
 tr.purchased {

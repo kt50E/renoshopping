@@ -527,7 +527,15 @@
         const status = item.status || 'Wishlist';
         const statusColor = status === 'Purchased' ? 'var(--success)' : status === 'Selected' ? 'var(--warning)' : '#8B5CF6';
         const statusBg = status === 'Purchased' ? 'var(--success-light)' : status === 'Selected' ? 'var(--warning-light)' : '#F3EEFF';
-        const notesHtml = item.notes ? escapeHtml(item.notes) : '';
+        let notesHtml = '';
+        if (item.notes) {
+          const lines = item.notes.split('\n').filter(l => l.trim());
+          if (lines.length > 1) {
+            notesHtml = `<span class="notes-first-line">${escapeHtml(lines[0])}</span><a href="#" class="notes-toggle">Read more</a><span class="notes-full" hidden>${escapeHtml(item.notes).replace(/\n/g, '<br>')}</span>`;
+          } else {
+            notesHtml = escapeHtml(item.notes);
+          }
+        }
         const imgHtml = item.imageUrl
           ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
           : `<div class="item-thumbnail-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
@@ -562,6 +570,22 @@
     shoppingTotal.textContent = `Estimated Total (unpurchased): ${formatCurrency(unpurchasedTotal)}`;
 
     // Events
+    shoppingBody.querySelectorAll('.notes-toggle').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const firstLine = link.previousElementSibling;
+        const full = link.nextElementSibling;
+        if (full.hidden) {
+          full.hidden = false;
+          firstLine.hidden = true;
+          link.textContent = 'Show less';
+        } else {
+          full.hidden = true;
+          firstLine.hidden = false;
+          link.textContent = 'Read more';
+        }
+      });
+    });
     shoppingBody.querySelectorAll('.edit-item').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.closest('tr').dataset.id;
