@@ -518,7 +518,7 @@ body {
 
 .chart-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 20px;
 }
 
@@ -539,9 +539,9 @@ body {
 /* --- Donut Chart --- */
 .donut-wrapper {
   position: relative;
-  width: 180px;
-  height: 180px;
-  margin: 0 auto 20px;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto 24px;
 }
 
 .donut-svg {
@@ -581,7 +581,7 @@ body {
 }
 
 .donut-center-amount {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--gray-900);
 }

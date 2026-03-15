@@ -935,23 +935,6 @@
       </span>`;
     }).join('');
 
-    // --- Horizontal Bar Chart ---
-    const barChart = document.getElementById('bar-chart');
-    const maxAmount = categories.length > 0 ? categories[0].amount : 1;
-
-    barChart.innerHTML = categories.map((cat, i) => {
-      const color = CHART_COLORS[i % CHART_COLORS.length];
-      const widthPct = maxAmount > 0 ? (cat.amount / maxAmount) * 100 : 0;
-      return `<div class="bar-item">
-        <div class="bar-label-row">
-          <span class="bar-label">${escapeHtml(cat.name)}</span>
-          <span class="bar-amount">${formatCurrency(cat.amount)}</span>
-        </div>
-        <div class="bar-track">
-          <div class="bar-fill" style="width:${widthPct}%;background:${color}"></div>
-        </div>
-      </div>`;
-    }).join('');
   }
 
   function renderAll() {
