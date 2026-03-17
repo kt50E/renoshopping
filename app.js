@@ -31,6 +31,13 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  const auth = firebase.auth();
+  const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+  // Only these Google accounts can access the app
+  const ALLOWED_EMAILS = [
+    'turajanek@gmail.com'
+  ];
 
   // --- Firestore Helpers ---
   const Firestore = {
@@ -81,80 +88,61 @@
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   }
 
-  // --- Password Lock ---
+  // --- Firebase Auth ---
   const lockScreen = document.getElementById('lock-screen');
-  const app = document.getElementById('app');
-  const lockPassword = document.getElementById('lock-password');
-  const lockSubmit = document.getElementById('lock-submit');
+  const appEl = document.getElementById('app');
   const lockError = document.getElementById('lock-error');
   const lockBtn = document.getElementById('lock-btn');
+  const googleSignInBtn = document.getElementById('google-sign-in-btn');
 
-  function hashPassword(pw) {
-    // Simple hash for local use — not meant for production security
-    let hash = 0;
-    for (let i = 0; i < pw.length; i++) {
-      const char = pw.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash |= 0;
-    }
-    return hash.toString();
-  }
-
-  function initLock() {
-    lockPassword.parentElement.style.display = '';
-    lockSubmit.style.display = '';
-  }
-
-  function unlock() {
+  function showApp() {
     lockScreen.hidden = true;
-    app.hidden = false;
+    appEl.hidden = false;
     const lastTab = Storage.get('activeTab', 'dashboard');
     switchTab(lastTab);
     renderAll();
   }
 
-  function lock() {
-    clearSession();
+  function showLockScreen() {
     lockScreen.hidden = false;
-    app.hidden = true;
-    lockPassword.value = '';
+    appEl.hidden = true;
     lockError.hidden = true;
-    initLock();
   }
 
-  const SESSION_DURATION = 20 * 60 * 1000; // 20 minutes
+  // Google sign-in button
+  googleSignInBtn.addEventListener('click', () => {
+    lockError.hidden = true;
+    auth.signInWithPopup(googleProvider).catch((error) => {
+      console.error('Sign-in error:', error);
+      if (error.code !== 'auth/popup-closed-by-user') {
+        lockError.textContent = 'Sign-in failed. Please try again.';
+        lockError.hidden = false;
+      }
+    });
+  });
 
-  function setSession() {
-    Storage.set('session_expires', Date.now() + SESSION_DURATION);
-  }
+  // Sign-out button
+  lockBtn.addEventListener('click', () => {
+    auth.signOut();
+  });
 
-  function hasValidSession() {
-    const expires = Storage.get('session_expires');
-    return expires && Date.now() < expires;
-  }
-
-  function clearSession() {
-    Storage.remove('session_expires');
-  }
-
-  lockSubmit.addEventListener('click', () => {
-    if (lockPassword.value === 'spongebob') {
-      setSession();
-      unlock();
+  // Auth state listener — handles sign-in, sign-out, and page reload
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      if (ALLOWED_EMAILS.includes(user.email.toLowerCase())) {
+        // Authorized user — load data and show app
+        initData().then(() => showApp());
+      } else {
+        // Unauthorized user — show error and sign them out
+        lockError.textContent = 'Access denied. This account (' + user.email + ') is not authorized.';
+        lockError.hidden = false;
+        auth.signOut();
+      }
     } else {
-      lockError.hidden = false;
-      lockPassword.value = '';
-      lockPassword.focus();
+      // No user signed in — show lock screen
+      showLockScreen();
     }
   });
-
-  lockPassword.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') lockSubmit.click();
-  });
-
-  lockBtn.addEventListener('click', lock);
-
-  initLock();
 
   // --- Tab Navigation ---
   const navBtns = document.querySelectorAll('.sidebar-nav-btn');
@@ -1273,13 +1261,5 @@
     Storage.set('expenses', expenses);
     Storage.set('shopping', shoppingItems);
   }
-
-  initData().then(() => {
-    // Auto-unlock if session is still valid (must be after data is loaded)
-    if (hasValidSession()) {
-      setSession();
-      unlock();
-    }
-  });
 
 })();
