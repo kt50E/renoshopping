@@ -574,8 +574,8 @@
       shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
         const status = item.status || 'Wishlist';
-        const statusColor = status === 'Purchased' ? 'var(--success)' : status === 'Selected' ? 'var(--warning)' : '#8B5CF6';
-        const statusBg = status === 'Purchased' ? 'var(--success-light)' : status === 'Selected' ? 'var(--warning-light)' : '#F3EEFF';
+        const statusColor = status === 'Purchased' ? 'var(--success)' : status === 'Selected' ? '#3B82F6' : '#D97706';
+        const statusBg = status === 'Purchased' ? 'var(--success-light)' : status === 'Selected' ? '#EFF6FF' : '#FEF9C3';
         let notesHtml = '';
         if (item.notes) {
           const lines = item.notes.split('\n').filter(l => l.trim());
