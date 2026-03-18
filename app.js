@@ -109,17 +109,16 @@
     lockError.hidden = true;
   }
 
-  // Google sign-in button (redirect works better on GitHub Pages)
+  // Google sign-in button
   googleSignInBtn.addEventListener('click', () => {
     lockError.hidden = true;
-    auth.signInWithRedirect(googleProvider);
-  });
-
-  // Handle redirect result when page reloads after sign-in
-  auth.getRedirectResult().catch((error) => {
-    console.error('Sign-in error:', error);
-    lockError.textContent = 'Sign-in failed. Please try again.';
-    lockError.hidden = false;
+    auth.signInWithPopup(googleProvider).catch((error) => {
+      console.error('Sign-in error:', error);
+      if (error.code !== 'auth/popup-closed-by-user') {
+        lockError.textContent = 'Sign-in failed. Please try again.';
+        lockError.hidden = false;
+      }
+    });
   });
 
   // Sign-out button
