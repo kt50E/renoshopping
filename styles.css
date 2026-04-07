@@ -1904,7 +1904,7 @@ tr.purchased {
   letter-spacing: 0.6px;
 }
 .expense-group-total {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--gray-800);
   font-variant-numeric: tabular-nums;
@@ -1918,7 +1918,7 @@ tr.purchased {
   grid-template-columns: 56px 1fr auto auto auto;
   gap: 16px;
   align-items: center;
-  padding: 14px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--gray-100);
   transition: background 0.12s;
 }
@@ -1933,9 +1933,10 @@ tr.purchased {
   line-height: 1.05;
 }
 .expense-day-num {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--gray-800);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
 }
 .expense-day-name {
   font-size: 10px;
@@ -1948,7 +1949,7 @@ tr.purchased {
   min-width: 0;
 }
 .expense-desc {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--gray-800);
   margin-bottom: 2px;
@@ -1961,18 +1962,18 @@ tr.purchased {
 }
 .expense-cat-pill {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: var(--gray-100);
   color: var(--gray-600);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
 }
 .expense-amount-cell {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--gray-800);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-600);
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
