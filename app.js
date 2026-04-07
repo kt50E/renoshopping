@@ -151,7 +151,7 @@
 
   const tabTitles = {
     dashboard: 'Budget Dashboard',
-    expenses: 'Expenses',
+    expenses: 'Spending Summary',
     shopping: 'Wishlist',
     purchased: 'Purchased History',
     timeline: 'Timeline'
