@@ -998,14 +998,16 @@
     'Onsite visit':        '#3B82F6',
     'Installation':        '#10B981',
     'Virtual meeting':     '#14B8A6',
-    'Delivery':            '#F59E0B'
+    'Delivery':            '#F59E0B',
+    'Others':              '#6B7280'
   };
 
   // Migrate legacy activity types to current names. Runs after data load.
   function migrateActivityTypes() {
     const map = {
       'Vendor meeting': 'Vendor office visit',
-      'Site visit':     'Onsite visit'
+      'Site visit':     'Onsite visit',
+      'Other':          'Others'
     };
     let changed = false;
     activities.forEach(a => {
