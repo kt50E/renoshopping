@@ -2010,20 +2010,20 @@ tr.purchased {
 }
 
 /* ============================
-   PURCHASED HISTORY — grouped by room
+   ROOM-GROUPED CARDS (Wishlist + Purchased History)
    ============================ */
-.purchased-groups {
+.room-groups {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
-.purchased-group {
+.room-group {
   background: #fff;
   border: 1px solid var(--gray-200);
   border-radius: 12px;
   overflow: hidden;
 }
-.purchased-group-header {
+.room-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2031,44 +2031,44 @@ tr.purchased {
   background: var(--gray-50);
   border-bottom: 1px solid var(--gray-200);
 }
-.purchased-group-title {
+.room-group-title {
   font-size: 13px;
   font-weight: 700;
   color: var(--gray-600);
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
-.purchased-group-meta {
+.room-group-meta {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13px;
   color: var(--gray-500);
 }
-.purchased-group-count {
+.room-group-count {
   color: var(--gray-500);
 }
-.purchased-group-total {
+.room-group-total {
   font-size: 16px;
   font-weight: 700;
   color: var(--gray-800);
   font-variant-numeric: tabular-nums;
 }
-.purchased-group-body {
+.room-group-body {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
-.purchased-group-body .shopping-card {
+.room-group-body .shopping-card {
   border: none;
   border-bottom: 1px solid var(--gray-100);
   border-radius: 0;
   padding: 14px 18px;
 }
-.purchased-group-body .shopping-card:last-child {
+.room-group-body .shopping-card:last-child {
   border-bottom: none;
 }
-.purchased-group-body .shopping-card:hover {
+.room-group-body .shopping-card:hover {
   background: var(--gray-50);
   box-shadow: none;
 }

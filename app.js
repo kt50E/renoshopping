@@ -725,46 +725,79 @@
     });
   }
 
+  function renderWishlistCard(item) {
+    const total = (item.qty || 1) * (item.price || 0);
+
+    const imgHtml = item.imageUrl
+      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
+      : `<svg class="placeholder-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+
+    // Meta line (no Room — that's now the group header): Type · Vendor · Qty N · 🔗
+    const metaParts = [];
+    if (item.material) metaParts.push(escapeHtml(item.material));
+    if (item.vendor)   metaParts.push(escapeHtml(item.vendor));
+    if (item.qty && item.qty > 1) metaParts.push('Qty ' + item.qty);
+    if (item.link)     metaParts.push(`<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="Open product link">🔗 Link</a>`);
+    const metaHtml = metaParts.join(' <span class="shopping-card-meta-sep">·</span> ');
+
+    const notesHtml = item.notes
+      ? `<div class="shopping-card-notes">${escapeHtml(item.notes)}</div>`
+      : '';
+
+    return `
+      <div class="shopping-card" data-id="${item.id}">
+        <div class="shopping-card-img">${imgHtml}</div>
+        <div class="shopping-card-info">
+          <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
+          <div class="shopping-card-meta">${metaHtml || '<span style="color:var(--gray-400)">No details yet</span>'}</div>
+          ${notesHtml}
+        </div>
+        <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
+        <div class="shopping-card-bottom">
+          <div class="card-actions">
+            <button class="btn-icon edit-card-item" title="Edit">✏️</button>
+            <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function renderShoppingCards(filtered) {
     if (filtered.length === 0) {
       shoppingCards.innerHTML = '<div class="empty-row">No items to show.</div>';
       return;
     }
 
-    shoppingCards.innerHTML = filtered.map(item => {
-      const total = (item.qty || 1) * (item.price || 0);
+    // Group by room (alphabetical, "No room" last) — same pattern as Purchased History.
+    const groups = {};
+    filtered.forEach(item => {
+      const key = item.room || 'No room';
+      (groups[key] = groups[key] || []).push(item);
+    });
+    const roomKeys = Object.keys(groups).sort((a, b) => {
+      if (a === 'No room') return 1;
+      if (b === 'No room') return -1;
+      return a.localeCompare(b);
+    });
 
-      const imgHtml = item.imageUrl
-        ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
-        : `<svg class="placeholder-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
-
-      // Build meta line: Room · Type · Vendor · Qty N · 🔗
-      const metaParts = [];
-      if (item.room)     metaParts.push(escapeHtml(item.room));
-      if (item.material) metaParts.push(escapeHtml(item.material));
-      if (item.vendor)   metaParts.push(escapeHtml(item.vendor));
-      if (item.qty && item.qty > 1) metaParts.push('Qty ' + item.qty);
-      if (item.link)     metaParts.push(`<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="Open product link">🔗 Link</a>`);
-      const metaHtml = metaParts.join(' <span class="shopping-card-meta-sep">·</span> ');
-
-      const notesHtml = item.notes
-        ? `<div class="shopping-card-notes">${escapeHtml(item.notes)}</div>`
-        : '';
+    shoppingCards.innerHTML = roomKeys.map(room => {
+      const items = groups[room];
+      const subtotal = items.reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
+      const countLabel = items.length + (items.length === 1 ? ' item' : ' items');
 
       return `
-        <div class="shopping-card" data-id="${item.id}">
-          <div class="shopping-card-img">${imgHtml}</div>
-          <div class="shopping-card-info">
-            <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
-            <div class="shopping-card-meta">${metaHtml || '<span style="color:var(--gray-400)">No details yet</span>'}</div>
-            ${notesHtml}
-          </div>
-          <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
-          <div class="shopping-card-bottom">
-            <div class="card-actions">
-              <button class="btn-icon edit-card-item" title="Edit">✏️</button>
-              <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
+        <div class="room-group">
+          <div class="room-group-header">
+            <span class="room-group-title">${escapeHtml(room.toUpperCase())}</span>
+            <div class="room-group-meta">
+              <span class="room-group-count">${countLabel}</span>
+              <span class="expense-stats-sep">·</span>
+              <span class="room-group-total">${formatCurrency(subtotal)}</span>
             </div>
+          </div>
+          <div class="room-group-body">
+            ${items.map(renderWishlistCard).join('')}
           </div>
         </div>
       `;
@@ -1154,16 +1187,16 @@
       const countLabel = items.length + (items.length === 1 ? ' item' : ' items');
 
       return `
-        <div class="purchased-group">
-          <div class="purchased-group-header">
-            <span class="purchased-group-title">${escapeHtml(room.toUpperCase())}</span>
-            <div class="purchased-group-meta">
-              <span class="purchased-group-count">${countLabel}</span>
+        <div class="room-group">
+          <div class="room-group-header">
+            <span class="room-group-title">${escapeHtml(room.toUpperCase())}</span>
+            <div class="room-group-meta">
+              <span class="room-group-count">${countLabel}</span>
               <span class="expense-stats-sep">·</span>
-              <span class="purchased-group-total">${formatCurrency(subtotal)}</span>
+              <span class="room-group-total">${formatCurrency(subtotal)}</span>
             </div>
           </div>
-          <div class="purchased-group-body">
+          <div class="room-group-body">
             ${items.map(renderPurchasedCard).join('')}
           </div>
         </div>
