@@ -994,12 +994,25 @@
   })();
 
   const ACTIVITY_COLORS = {
-    'Vendor meeting': '#8B5CF6',
-    'Site visit':     '#3B82F6',
-    'Installation':   '#10B981',
-    'Delivery':       '#F59E0B',
-    'Other':          '#6B7280'
+    'Vendor office visit': '#8B5CF6',
+    'Onsite visit':        '#3B82F6',
+    'Installation':        '#10B981',
+    'Virtual meeting':     '#14B8A6',
+    'Delivery':            '#F59E0B'
   };
+
+  // Migrate legacy activity types to current names. Runs after data load.
+  function migrateActivityTypes() {
+    const map = {
+      'Vendor meeting': 'Vendor office visit',
+      'Site visit':     'Onsite visit'
+    };
+    let changed = false;
+    activities.forEach(a => {
+      if (map[a.type]) { a.type = map[a.type]; changed = true; }
+    });
+    if (changed) saveActivities();
+  }
 
   const addActivityBtn    = document.getElementById('add-activity-btn');
   const activityModal     = document.getElementById('activity-modal');
@@ -1184,14 +1197,14 @@
       document.getElementById('activity-title').value  = activity.title || '';
       document.getElementById('activity-date').value   = activity.date || '';
       document.getElementById('activity-time').value   = activity.time || '';
-      document.getElementById('activity-type').value   = activity.type || 'Vendor meeting';
+      document.getElementById('activity-type').value   = activity.type || 'Vendor office visit';
       document.getElementById('activity-vendor').value = activity.vendor || '';
       activityDeleteBtn.hidden = false;
     } else {
       activityModalTitle.textContent = 'Add Activity';
       document.getElementById('activity-id').value = '';
       document.getElementById('activity-date').value = defaultDate || ymd(new Date());
-      document.getElementById('activity-type').value = 'Vendor meeting';
+      document.getElementById('activity-type').value = 'Vendor office visit';
       activityDeleteBtn.hidden = true;
     }
     openModal(activityModal);
@@ -1543,6 +1556,7 @@
     expenses = fbExpenses || Storage.get('expenses', []);
     shoppingItems = fbShopping || Storage.get('shopping', []);
     activities = fbActivities || Storage.get('activities', []);
+    migrateActivityTypes();
 
     // Sync localStorage with whatever we loaded (keeps offline cache fresh)
     Storage.set('totalBudget', totalBudgetAmount);
