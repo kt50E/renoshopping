@@ -1763,3 +1763,237 @@ tr.purchased {
     justify-content: space-between;
   }
 }
+
+/* ============================
+   EXPENSES — stats strip, filter card, month groups
+   ============================ */
+.expenses-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.expense-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--gray-500);
+}
+.expense-stats-sep {
+  color: var(--gray-300);
+}
+.expense-stats-total {
+  font-weight: 700;
+  color: var(--gray-800);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.filter-card {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.filter-card-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.filter-search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+.filter-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  pointer-events: none;
+}
+.filter-search input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--gray-50);
+  color: var(--gray-800);
+}
+.filter-search input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #fff;
+}
+.filter-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  flex: 1;
+}
+.filter-control label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.filter-control select {
+  padding: 9px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--gray-800);
+  cursor: pointer;
+}
+.filter-control select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 4px;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn-link:hover {
+  color: var(--gray-800);
+}
+
+.expense-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.expense-group {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.expense-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+.expense-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.expense-group-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+.expense-group-body {
+  display: flex;
+  flex-direction: column;
+}
+.expense-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background 0.12s;
+}
+.expense-row:last-child {
+  border-bottom: none;
+}
+.expense-row:hover {
+  background: var(--gray-50);
+}
+.expense-day-col {
+  text-align: center;
+  line-height: 1.05;
+}
+.expense-day-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.expense-day-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.expense-info {
+  min-width: 0;
+}
+.expense-desc {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+.expense-notes-text {
+  font-size: 13px;
+  color: var(--gray-400);
+  font-style: italic;
+}
+.expense-cat-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--gray-100);
+  color: var(--gray-600);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.expense-amount-cell {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.expense-actions {
+  display: flex;
+  gap: 2px;
+}
+
+@media (max-width: 720px) {
+  .expense-row {
+    grid-template-columns: 48px 1fr auto;
+    grid-template-areas:
+      "day info amount"
+      "day cat  actions";
+    gap: 4px 12px;
+  }
+  .expense-day-col   { grid-area: day; }
+  .expense-info      { grid-area: info; }
+  .expense-amount-cell { grid-area: amount; font-size: 16px; }
+  .expense-cat-pill  { grid-area: cat; justify-self: start; }
+  .expense-actions   { grid-area: actions; justify-self: end; }
+  .filter-control { min-width: 140px; }
+}

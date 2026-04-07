@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RenoTracker — Renovation Expense & Shopping Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
 
@@ -143,67 +143,75 @@
 
     <!-- Expenses Tab -->
     <main id="tab-expenses" class="tab-content" hidden>
-      <div class="page-header">
+      <!-- Stats strip -->
+      <div class="page-header expenses-page-header">
+        <div class="expense-stats">
+          <span id="expense-stats-count">0 expenses</span>
+          <span class="expense-stats-sep">·</span>
+          <span id="expense-stats-total" class="expense-stats-total">$0.00 total</span>
+        </div>
         <button id="add-expense-btn" class="btn btn-primary">+ Add Expense</button>
       </div>
 
-      <!-- Filters -->
-      <div class="filters">
-        <select id="expense-filter-category">
-          <option value="">All Categories</option>
-          <optgroup label="Rooms">
-            <option value="Kitchen">Kitchen</option>
-            <option value="Half Bath">Half Bath</option>
-            <option value="Bath - Tub">Bath - Tub</option>
-            <option value="Bath - Primary">Bath - Primary</option>
-            <option value="Living Room">Living Room</option>
-            <option value="Office">Office</option>
-            <option value="Bedroom - Guest">Bedroom - Guest</option>
-            <option value="Bedroom - Primary">Bedroom - Primary</option>
-            <option value="Dining Room">Dining Room</option>
-            <option value="Laundry">Laundry</option>
-            <option value="Outdoor/Patio">Outdoor/Patio</option>
-          </optgroup>
-          <optgroup label="Home Systems & Upgrades">
-            <option value="Window Replacement">Window Replacement</option>
-            <option value="HVAC Replacement">HVAC Replacement</option>
-            <option value="Roofing">Roofing</option>
-            <option value="Insulation">Insulation</option>
-            <option value="Siding">Siding</option>
-          </optgroup>
-          <optgroup label="Professional Services">
-            <option value="Interior Designer">Interior Designer</option>
-            <option value="Architect">Architect</option>
-            <option value="Contractor">Contractor</option>
-            <option value="Electrician">Electrician</option>
-            <option value="Plumber">Plumber</option>
-            <option value="Permits & Fees">Permits & Fees</option>
-          </optgroup>
-          <optgroup label="Other">
-            <option value="Samples">Samples</option>
-          </optgroup>
-        </select>
-        <input type="text" id="expense-search" placeholder="Search expenses...">
+      <!-- Filter card -->
+      <div class="filter-card">
+        <div class="filter-card-row">
+          <div class="filter-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="expense-search" placeholder="Search expenses...">
+          </div>
+        </div>
+        <div class="filter-card-row">
+          <div class="filter-control">
+            <label for="expense-filter-category">Category</label>
+            <select id="expense-filter-category">
+              <option value="">All categories</option>
+              <optgroup label="Rooms">
+                <option value="Kitchen">Kitchen</option>
+                <option value="Half Bath">Half Bath</option>
+                <option value="Bath - Tub">Bath - Tub</option>
+                <option value="Bath - Primary">Bath - Primary</option>
+                <option value="Living Room">Living Room</option>
+                <option value="Office">Office</option>
+                <option value="Bedroom - Guest">Bedroom - Guest</option>
+                <option value="Bedroom - Primary">Bedroom - Primary</option>
+                <option value="Dining Room">Dining Room</option>
+                <option value="Laundry">Laundry</option>
+                <option value="Outdoor/Patio">Outdoor/Patio</option>
+              </optgroup>
+              <optgroup label="Home Systems & Upgrades">
+                <option value="Window Replacement">Window Replacement</option>
+                <option value="HVAC Replacement">HVAC Replacement</option>
+                <option value="Roofing">Roofing</option>
+                <option value="Insulation">Insulation</option>
+                <option value="Siding">Siding</option>
+              </optgroup>
+              <optgroup label="Professional Services">
+                <option value="Interior Designer">Interior Designer</option>
+                <option value="Architect">Architect</option>
+                <option value="Contractor">Contractor</option>
+                <option value="Electrician">Electrician</option>
+                <option value="Plumber">Plumber</option>
+                <option value="Permits & Fees">Permits & Fees</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="Samples">Samples</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="filter-control">
+            <label for="expense-filter-month">Month</label>
+            <select id="expense-filter-month">
+              <option value="">All months</option>
+            </select>
+          </div>
+          <button id="expense-clear-filters" class="btn-link" hidden>Clear filters</button>
+        </div>
       </div>
 
-      <!-- Expenses Table -->
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th class="sortable" data-sort="date">Date <span class="sort-arrow">▲▼</span></th>
-              <th>Description</th>
-              <th>Category</th>
-              <th class="sortable" data-sort="amount">Amount <span class="sort-arrow">▲▼</span></th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="expenses-body">
-            <tr class="empty-row">
-              <td colspan="5">No expenses recorded yet.</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Grouped expenses -->
+      <div id="expense-groups" class="expense-groups">
+        <div class="empty-row">No expenses recorded yet.</div>
       </div>
 
       <!-- Add/Edit Expense Modal -->
@@ -595,6 +603,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="app.js?v=23"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

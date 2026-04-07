@@ -280,7 +280,6 @@
   // ============================
   // SORT HELPERS
   // ============================
-  let expenseSort = { key: 'date', dir: 'desc' };
   let shoppingSort = { key: null, dir: 'asc' };
 
   const STATUS_ORDER = { 'Wishlist': 0, 'Selected': 1, 'Purchased': 2 };
@@ -314,9 +313,13 @@
   const expenseModal = document.getElementById('expense-modal');
   const expenseForm = document.getElementById('expense-form');
   const expenseModalTitle = document.getElementById('expense-modal-title');
-  const expensesBody = document.getElementById('expenses-body');
+  const expenseGroupsEl = document.getElementById('expense-groups');
   const expenseFilterCat = document.getElementById('expense-filter-category');
+  const expenseFilterMonth = document.getElementById('expense-filter-month');
   const expenseSearch = document.getElementById('expense-search');
+  const expenseClearBtn = document.getElementById('expense-clear-filters');
+  const expenseStatsCount = document.getElementById('expense-stats-count');
+  const expenseStatsTotal = document.getElementById('expense-stats-total');
 
   function saveExpenses() {
     Storage.set('expenses', expenses);
@@ -355,66 +358,114 @@
     }
   }
 
+  // Build the Month dropdown options from existing expense dates.
+  // Options are sorted newest-first; values are 'YYYY-MM' so they sort lexically.
+  function refreshMonthFilterOptions() {
+    const months = new Set();
+    expenses.forEach(e => {
+      if (e.date && /^\d{4}-\d{2}/.test(e.date)) months.add(e.date.slice(0, 7));
+    });
+    const sorted = Array.from(months).sort().reverse();
+    const current = expenseFilterMonth.value;
+    const labelFor = (ym) => {
+      const [y, m] = ym.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+    expenseFilterMonth.innerHTML = '<option value="">All months</option>' +
+      sorted.map(ym => `<option value="${ym}">${labelFor(ym)}</option>`).join('');
+    // Preserve user selection if still valid
+    if (current && sorted.includes(current)) expenseFilterMonth.value = current;
+  }
+
   function renderExpenses() {
-    const filterCat = expenseFilterCat.value;
-    const search = expenseSearch.value.toLowerCase();
+    refreshMonthFilterOptions();
+
+    const filterCat   = expenseFilterCat.value;
+    const filterMonth = expenseFilterMonth.value;
+    const search      = expenseSearch.value.toLowerCase();
+    const hasFilters  = !!(filterCat || filterMonth || search);
+    expenseClearBtn.hidden = !hasFilters;
 
     let filtered = expenses;
-    if (filterCat) filtered = filtered.filter(e => e.category === filterCat);
+    if (filterCat)   filtered = filtered.filter(e => e.category === filterCat);
+    if (filterMonth) filtered = filtered.filter(e => (e.date || '').startsWith(filterMonth));
     if (search) filtered = filtered.filter(e =>
       (e.description || '').toLowerCase().includes(search) ||
       (e.category || '').toLowerCase().includes(search) ||
       (e.notes || '').toLowerCase().includes(search)
     );
 
-    // Sort
-    const eDir = expenseSort.dir === 'asc' ? 1 : -1;
-    if (expenseSort.key === 'date') {
-      filtered.sort((a, b) => eDir * (new Date(a.date) - new Date(b.date)));
-    } else if (expenseSort.key === 'amount') {
-      filtered.sort((a, b) => eDir * (Number(a.amount) - Number(b.amount)));
-    }
-
-    updateSortHeaders('#tab-expenses', expenseSort);
+    // Stats reflect what's currently visible.
+    const totalAmount = filtered.reduce((s, e) => s + Number(e.amount || 0), 0);
+    expenseStatsCount.textContent = filtered.length + (filtered.length === 1 ? ' expense' : ' expenses');
+    expenseStatsTotal.textContent = formatCurrency(totalAmount) + ' total';
 
     if (filtered.length === 0) {
-      expensesBody.innerHTML = '<tr class="empty-row"><td colspan="5">No expenses found.</td></tr>';
+      expenseGroupsEl.innerHTML = '<div class="empty-row">No expenses found.</div>';
       return;
     }
 
-    expensesBody.innerHTML = filtered.map(e => {
-      const color = '#6B7280';
+    // Group by YYYY-MM (newest month first; rows within month newest first)
+    const groups = {};
+    filtered.forEach(e => {
+      const key = (e.date || '').slice(0, 7) || 'unknown';
+      (groups[key] = groups[key] || []).push(e);
+    });
+    const groupKeys = Object.keys(groups).sort().reverse();
+
+    const monthLabel = (key) => {
+      if (key === 'unknown') return 'No date';
+      const [y, m] = key.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    };
+
+    expenseGroupsEl.innerHTML = groupKeys.map(key => {
+      const items = groups[key].slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const subtotal = items.reduce((s, e) => s + Number(e.amount || 0), 0);
       return `
-        <tr data-id="${e.id}">
-          <td class="date-cell">${e.date}</td>
-          <td>
-            ${escapeHtml(e.description)}
-            ${e.notes ? `<br><small style="color:var(--gray-400)">${escapeHtml(e.notes)}</small>` : ''}
-          </td>
-          <td><span class="category-badge" style="background:${color}20;color:${color}">${escapeHtml(e.category || 'Uncategorized')}</span></td>
-          <td class="expense-amount">${formatCurrency(e.amount)}</td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="btn-icon edit-expense" title="Edit">✏️</button>
-              <button class="btn-icon delete-expense" title="Delete">🗑️</button>
-            </div>
-          </td>
-        </tr>
+        <div class="expense-group">
+          <div class="expense-group-header">
+            <span class="expense-group-title">${escapeHtml(monthLabel(key).toUpperCase())}</span>
+            <span class="expense-group-total">${formatCurrency(subtotal)}</span>
+          </div>
+          <div class="expense-group-body">
+            ${items.map(e => renderExpenseRow(e)).join('')}
+          </div>
+        </div>
       `;
     }).join('');
 
-    expensesBody.querySelectorAll('.edit-expense').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.closest('tr').dataset.id;
-        editExpense(id);
-      });
+    // Wire up row events
+    expenseGroupsEl.querySelectorAll('.edit-expense').forEach(btn => {
+      btn.addEventListener('click', () => editExpense(btn.closest('.expense-row').dataset.id));
     });
-    expensesBody.querySelectorAll('.delete-expense').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.closest('tr').dataset.id;
-        deleteExpense(id);
-      });
+    expenseGroupsEl.querySelectorAll('.delete-expense').forEach(btn => {
+      btn.addEventListener('click', () => deleteExpense(btn.closest('.expense-row').dataset.id));
     });
+  }
+
+  function renderExpenseRow(e) {
+    const d = e.date ? parseDateLocal(e.date) : null;
+    const dayNum  = d ? d.getDate() : '—';
+    const dayName = d ? d.toLocaleDateString('en-US', { weekday: 'short' }) : '';
+    return `
+      <div class="expense-row" data-id="${e.id}">
+        <div class="expense-day-col">
+          <div class="expense-day-num">${dayNum}</div>
+          <div class="expense-day-name">${dayName}</div>
+        </div>
+        <div class="expense-info">
+          <div class="expense-desc">${escapeHtml(e.description || 'Untitled')}</div>
+          ${e.notes ? `<div class="expense-notes-text">${escapeHtml(e.notes)}</div>` : ''}
+        </div>
+        <span class="expense-cat-pill">${escapeHtml(e.category || 'Uncategorized')}</span>
+        <div class="expense-amount-cell">${formatCurrency(e.amount)}</div>
+        <div class="expense-actions">
+          <button class="btn-icon edit-expense" title="Edit">✏️</button>
+          <button class="btn-icon delete-expense" title="Delete">🗑️</button>
+        </div>
+      </div>
+    `;
   }
 
   addExpenseBtn.addEventListener('click', () => {
@@ -471,13 +522,13 @@
   });
 
   expenseFilterCat.addEventListener('change', renderExpenses);
+  expenseFilterMonth.addEventListener('change', renderExpenses);
   expenseSearch.addEventListener('input', renderExpenses);
-
-  document.querySelectorAll('#tab-expenses th.sortable').forEach(th => {
-    th.addEventListener('click', () => {
-      toggleSort(expenseSort, th.dataset.sort);
-      renderExpenses();
-    });
+  expenseClearBtn.addEventListener('click', () => {
+    expenseFilterCat.value = '';
+    expenseFilterMonth.value = '';
+    expenseSearch.value = '';
+    renderExpenses();
   });
 
   // ============================
