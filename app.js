@@ -152,7 +152,7 @@
   const tabTitles = {
     dashboard: 'Budget Dashboard',
     expenses: 'Expenses',
-    shopping: 'Shopping List',
+    shopping: 'Wishlist',
     timeline: 'Timeline'
   };
 
@@ -281,8 +281,6 @@
   // SORT HELPERS
   // ============================
   let shoppingSort = { key: null, dir: 'asc' };
-
-  const STATUS_ORDER = { 'Wishlist': 0, 'Selected': 1, 'Purchased': 2 };
 
   function updateSortHeaders(tableSelector, sortState) {
     document.querySelectorAll(`${tableSelector} th.sortable`).forEach(th => {
@@ -549,7 +547,6 @@
   const shoppingViewBtns = document.querySelectorAll('#tab-shopping .view-toggle-btn');
   const shoppingFilterRoom = document.getElementById('shopping-filter-room');
   const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
-  const hidePurchased = document.getElementById('hide-purchased');
   const shoppingTotal = document.getElementById('shopping-total');
 
   // View mode persists across sessions. Default to 'cards'.
@@ -615,12 +612,12 @@
   function renderShopping() {
     const filterRoom = shoppingFilterRoom.value;
     const filterMaterial = shoppingFilterMaterial.value;
-    const hideChecked = hidePurchased.checked;
 
-    let filtered = shoppingItems;
+    // Wishlist tab only shows non-purchased items. Purchased items
+    // live in their own (forthcoming) Purchased History view.
+    let filtered = shoppingItems.filter(i => !i.purchased);
     if (filterRoom) filtered = filtered.filter(i => i.room === filterRoom);
     if (filterMaterial) filtered = filtered.filter(i => i.material === filterMaterial);
-    if (hideChecked) filtered = filtered.filter(i => !i.purchased);
 
     // Sort
     if (shoppingSort.key) {
@@ -632,14 +629,9 @@
           return sDir * (a.room || '').localeCompare(b.room || '');
         } else if (shoppingSort.key === 'total') {
           return sDir * (((a.qty || 1) * (a.price || 0)) - ((b.qty || 1) * (b.price || 0)));
-        } else if (shoppingSort.key === 'status') {
-          return sDir * ((STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0));
         }
         return 0;
       });
-    } else {
-      // Default: unpurchased first
-      filtered.sort((a, b) => (a.purchased === b.purchased) ? 0 : a.purchased ? 1 : -1);
     }
 
     updateSortHeaders('#tab-shopping', shoppingSort);
@@ -649,13 +641,10 @@
     renderShoppingCards(filtered);
 
     if (filtered.length === 0) {
-      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
+      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="10">No items to show.</td></tr>';
     } else {
       shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
-        const status = item.status || 'Wishlist';
-        const statusColor = status === 'Purchased' ? 'var(--success)' : status === 'Selected' ? '#3B82F6' : '#D97706';
-        const statusBg = status === 'Purchased' ? 'var(--success-light)' : status === 'Selected' ? '#EFF6FF' : '#FEF9C3';
         let notesHtml = '';
         if (item.notes) {
           const lines = item.notes.split('\n').filter(l => l.trim());
@@ -670,7 +659,7 @@
           : `<div class="item-thumbnail-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
 
         return `
-          <tr data-id="${item.id}" class="${item.purchased ? 'purchased' : ''}">
+          <tr data-id="${item.id}">
             <td>${imgHtml}</td>
             <td>${escapeHtml(item.name || '')}</td>
             <td><span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || '-')}</span></td>
@@ -678,7 +667,6 @@
             <td>${escapeHtml(item.vendor || '-')}</td>
             <td>${item.qty || 1}</td>
             <td>${total > 0 ? formatCurrency(total) : '-'}</td>
-            <td><span class="category-badge" style="background:${statusBg};color:${statusColor}">${status}</span></td>
             <td>${notesHtml || '-'}</td>
             <td>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View</a>` : '-'}</td>
             <td>
@@ -692,11 +680,11 @@
       }).join('');
     }
 
-    // Total (unpurchased only)
-    const unpurchasedTotal = shoppingItems
+    // Wishlist total (only items currently in the wishlist)
+    const wishlistTotal = shoppingItems
       .filter(i => !i.purchased)
       .reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
-    shoppingTotal.textContent = `Estimated Total (unpurchased): ${formatCurrency(unpurchasedTotal)}`;
+    shoppingTotal.textContent = `Wishlist Total: ${formatCurrency(wishlistTotal)}`;
 
     // Events
     shoppingBody.querySelectorAll('.notes-toggle').forEach(link => {
@@ -744,8 +732,6 @@
 
     shoppingCards.innerHTML = filtered.map(item => {
       const total = (item.qty || 1) * (item.price || 0);
-      const status = item.status || 'Wishlist';
-      const statusClass = status.toLowerCase();
 
       const imgHtml = item.imageUrl
         ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
@@ -765,7 +751,7 @@
         : '';
 
       return `
-        <div class="shopping-card ${item.purchased ? 'purchased' : ''}" data-id="${item.id}">
+        <div class="shopping-card" data-id="${item.id}">
           <div class="shopping-card-img">${imgHtml}</div>
           <div class="shopping-card-info">
             <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
@@ -774,7 +760,6 @@
           </div>
           <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
           <div class="shopping-card-bottom">
-            <span class="status-pill ${statusClass}">${status}</span>
             <div class="card-actions">
               <button class="btn-icon edit-card-item" title="Edit">✏️</button>
               <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
@@ -806,7 +791,7 @@
   }
 
   addItemBtn.addEventListener('click', () => {
-    itemModalTitle.textContent = 'Add Item';
+    itemModalTitle.textContent = 'Add to Wishlist';
     itemForm.reset();
     document.getElementById('item-id').value = '';
     purchaseDateGroup.hidden = true;
@@ -818,7 +803,7 @@
   function editItem(id) {
     const item = shoppingItems.find(x => x.id === id);
     if (!item) return;
-    itemModalTitle.textContent = 'Edit Item';
+    itemModalTitle.textContent = 'Edit Wishlist Item';
     document.getElementById('item-name').value = item.name;
     document.getElementById('item-room').value = item.room || '';
     document.getElementById('item-material').value = item.material || '';
@@ -896,7 +881,6 @@
 
   shoppingFilterRoom.addEventListener('change', renderShopping);
   shoppingFilterMaterial.addEventListener('change', renderShopping);
-  hidePurchased.addEventListener('change', renderShopping);
 
   document.querySelectorAll('#tab-shopping th.sortable').forEach(th => {
     th.addEventListener('click', () => {
@@ -1149,6 +1133,21 @@
     'Delivery':            '#F59E0B',
     'Others':              '#6B7280'
   };
+
+  // Migrate any shopping items still using the legacy 'Selected' status
+  // to plain 'Wishlist'. Selected was removed when we split the page
+  // into Wishlist + Purchased History.
+  function migrateShoppingStatuses() {
+    let changed = false;
+    shoppingItems.forEach(item => {
+      if (item.status === 'Selected') {
+        item.status = 'Wishlist';
+        item.purchased = false;
+        changed = true;
+      }
+    });
+    if (changed) saveShoppingItems();
+  }
 
   // Migrate legacy activity types to current names. Runs after data load.
   function migrateActivityTypes() {
@@ -1707,6 +1706,7 @@
     shoppingItems = fbShopping || Storage.get('shopping', []);
     activities = fbActivities || Storage.get('activities', []);
     migrateActivityTypes();
+    migrateShoppingStatuses();
 
     // Sync localStorage with whatever we loaded (keeps offline cache fresh)
     Storage.set('totalBudget', totalBudgetAmount);
