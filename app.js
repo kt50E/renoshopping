@@ -152,7 +152,8 @@
   const tabTitles = {
     dashboard: 'Budget Dashboard',
     expenses: 'Expenses',
-    shopping: 'Shopping List'
+    shopping: 'Shopping List',
+    timeline: 'Timeline'
   };
 
   function switchTab(tabName) {
@@ -978,7 +979,292 @@
     renderExpenses();
     renderShopping();
     renderCharts();
+    renderTimeline();
   }
+
+  // ============================
+  // TIMELINE / ACTIVITIES
+  // ============================
+  let activities = [];
+  let timelineView = 'month'; // 'month' | 'list'
+  // Current month displayed in the calendar. Defaults to today's month.
+  let timelineCursor = (function () {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  })();
+
+  const ACTIVITY_COLORS = {
+    'Vendor meeting': '#8B5CF6',
+    'Site visit':     '#3B82F6',
+    'Installation':   '#10B981',
+    'Delivery':       '#F59E0B',
+    'Other':          '#6B7280'
+  };
+
+  const addActivityBtn    = document.getElementById('add-activity-btn');
+  const activityModal     = document.getElementById('activity-modal');
+  const activityForm      = document.getElementById('activity-form');
+  const activityModalTitle= document.getElementById('activity-modal-title');
+  const activityDeleteBtn = document.getElementById('activity-delete-btn');
+  const timelinePrev      = document.getElementById('timeline-prev');
+  const timelineNext      = document.getElementById('timeline-next');
+  const timelineTodayBtn  = document.getElementById('timeline-today');
+  const timelineMonthLabel= document.getElementById('timeline-month-label');
+  const calendarGrid      = document.getElementById('calendar-grid');
+  const activitiesList    = document.getElementById('activities-list');
+  const timelineMonthViewEl = document.getElementById('timeline-month-view');
+  const timelineListViewEl  = document.getElementById('timeline-list-view');
+  const viewBtns = document.querySelectorAll('.view-toggle-btn');
+
+  function saveActivities() {
+    Storage.set('activities', activities);
+    Firestore.saveCollection('activities', activities);
+  }
+
+  function pad2(n) { return n < 10 ? '0' + n : String(n); }
+  function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  function parseDateLocal(str) {
+    // Parse 'YYYY-MM-DD' as a LOCAL date (avoids UTC off-by-one).
+    if (!str) return null;
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function formatActivityTime(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hr = h % 12 || 12;
+    return hr + (m ? ':' + pad2(m) : '') + ' ' + ampm;
+  }
+
+  function renderTimeline() {
+    if (timelineView === 'month') {
+      timelineMonthViewEl.hidden = false;
+      timelineListViewEl.hidden = true;
+      renderCalendarMonth();
+    } else {
+      timelineMonthViewEl.hidden = true;
+      timelineListViewEl.hidden = false;
+      renderActivityList();
+    }
+  }
+
+  function renderCalendarMonth() {
+    const year  = timelineCursor.getFullYear();
+    const month = timelineCursor.getMonth();
+
+    timelineMonthLabel.textContent = timelineCursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    const firstOfMonth = new Date(year, month, 1);
+    const startWeekday = firstOfMonth.getDay(); // 0 = Sun
+    const gridStart = new Date(year, month, 1 - startWeekday);
+
+    const todayStr = ymd(new Date());
+
+    // Group activities by date
+    const byDate = {};
+    activities.forEach(a => {
+      if (!a.date) return;
+      (byDate[a.date] = byDate[a.date] || []).push(a);
+    });
+    // Sort each day's activities by time
+    Object.values(byDate).forEach(list => list.sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+
+    let html = '';
+    for (let i = 0; i < 42; i++) {
+      const cellDate = new Date(gridStart);
+      cellDate.setDate(gridStart.getDate() + i);
+      const cellStr = ymd(cellDate);
+      const isOtherMonth = cellDate.getMonth() !== month;
+      const isToday = cellStr === todayStr;
+      const dayEvents = byDate[cellStr] || [];
+
+      const MAX_VISIBLE = 3;
+      const visible = dayEvents.slice(0, MAX_VISIBLE);
+      const hiddenCount = dayEvents.length - visible.length;
+
+      html += `
+        <div class="calendar-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" data-date="${cellStr}">
+          <span class="cell-date">${cellDate.getDate()}</span>
+          <div class="cell-events">
+            ${visible.map(ev => `
+              <div class="cell-event" data-activity-id="${ev.id}" style="background:${ACTIVITY_COLORS[ev.type] || '#6B7280'}" title="${escapeHtml(ev.title)}">
+                ${ev.time ? escapeHtml(formatActivityTime(ev.time)) + ' ' : ''}${escapeHtml(ev.title)}
+              </div>
+            `).join('')}
+            ${hiddenCount > 0 ? `<div class="cell-event-more">+${hiddenCount} more</div>` : ''}
+          </div>
+        </div>
+      `;
+    }
+    calendarGrid.innerHTML = html;
+  }
+
+  function renderActivityList() {
+    if (activities.length === 0) {
+      activitiesList.innerHTML = '<div class="activity-empty">No activities yet. Click "+ Add Activity" to log your first one.</div>';
+      return;
+    }
+
+    const todayStr = ymd(new Date());
+    // Sort: upcoming ascending, then past descending; we'll split into two groups.
+    const upcoming = activities.filter(a => a.date >= todayStr).sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+    const past     = activities.filter(a => a.date <  todayStr).sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+
+    const rowHtml = (a, isPast) => {
+      const d = parseDateLocal(a.date);
+      const day = d ? d.getDate() : '';
+      const mon = d ? d.toLocaleDateString('en-US', { month: 'short' }) : '';
+      const color = ACTIVITY_COLORS[a.type] || '#6B7280';
+      const metaParts = [a.type];
+      if (a.time) metaParts.push(formatActivityTime(a.time));
+      if (a.vendor) metaParts.push(escapeHtml(a.vendor));
+      return `
+        <div class="activity-row ${isPast ? 'past' : ''}" data-activity-id="${a.id}">
+          <div class="activity-date-col">
+            <div class="activity-date-day">${day}</div>
+            <div class="activity-date-month">${mon}</div>
+          </div>
+          <div class="activity-type-bar" style="background:${color}"></div>
+          <div class="activity-info">
+            <div class="activity-info-title">${escapeHtml(a.title)}</div>
+            <div class="activity-info-meta">${metaParts.filter(Boolean).join(' · ')}</div>
+          </div>
+          <button class="btn-icon edit-activity" title="Edit">✏️</button>
+        </div>
+      `;
+    };
+
+    let html = '';
+    if (upcoming.length) {
+      html += '<div class="activity-group"><div class="activity-group-label">Upcoming</div>';
+      html += upcoming.map(a => rowHtml(a, false)).join('');
+      html += '</div>';
+    }
+    if (past.length) {
+      html += '<div class="activity-group"><div class="activity-group-label">Past</div>';
+      html += past.map(a => rowHtml(a, true)).join('');
+      html += '</div>';
+    }
+    activitiesList.innerHTML = html;
+  }
+
+  // --- Month navigation ---
+  timelinePrev.addEventListener('click', () => {
+    timelineCursor = new Date(timelineCursor.getFullYear(), timelineCursor.getMonth() - 1, 1);
+    renderCalendarMonth();
+  });
+  timelineNext.addEventListener('click', () => {
+    timelineCursor = new Date(timelineCursor.getFullYear(), timelineCursor.getMonth() + 1, 1);
+    renderCalendarMonth();
+  });
+  timelineTodayBtn.addEventListener('click', () => {
+    const now = new Date();
+    timelineCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+    renderTimeline();
+  });
+
+  // --- View toggle ---
+  viewBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      timelineView = btn.dataset.view;
+      viewBtns.forEach(b => b.classList.toggle('active', b === btn));
+      renderTimeline();
+    });
+  });
+
+  // --- Add/Edit activity ---
+  function openActivityModal(activity, defaultDate) {
+    activityForm.reset();
+    if (activity) {
+      activityModalTitle.textContent = 'Edit Activity';
+      document.getElementById('activity-id').value     = activity.id;
+      document.getElementById('activity-title').value  = activity.title || '';
+      document.getElementById('activity-date').value   = activity.date || '';
+      document.getElementById('activity-time').value   = activity.time || '';
+      document.getElementById('activity-type').value   = activity.type || 'Vendor meeting';
+      document.getElementById('activity-vendor').value = activity.vendor || '';
+      activityDeleteBtn.hidden = false;
+    } else {
+      activityModalTitle.textContent = 'Add Activity';
+      document.getElementById('activity-id').value = '';
+      document.getElementById('activity-date').value = defaultDate || ymd(new Date());
+      document.getElementById('activity-type').value = 'Vendor meeting';
+      activityDeleteBtn.hidden = true;
+    }
+    openModal(activityModal);
+  }
+
+  addActivityBtn.addEventListener('click', () => openActivityModal(null));
+
+  // Click a calendar cell to add an activity for that day;
+  // click an existing event chip to edit.
+  calendarGrid.addEventListener('click', (e) => {
+    const chip = e.target.closest('.cell-event');
+    if (chip) {
+      e.stopPropagation();
+      const id = chip.dataset.activityId;
+      const act = activities.find(a => a.id === id);
+      if (act) openActivityModal(act);
+      return;
+    }
+    const more = e.target.closest('.cell-event-more');
+    if (more) {
+      // Switch to list view, jumping to that date's group.
+      timelineView = 'list';
+      viewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === 'list'));
+      renderTimeline();
+      return;
+    }
+    const cell = e.target.closest('.calendar-cell');
+    if (cell && !cell.classList.contains('other-month')) {
+      openActivityModal(null, cell.dataset.date);
+    }
+  });
+
+  activitiesList.addEventListener('click', (e) => {
+    const row = e.target.closest('.activity-row');
+    if (!row) return;
+    const act = activities.find(a => a.id === row.dataset.activityId);
+    if (act) openActivityModal(act);
+  });
+
+  activityForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id     = document.getElementById('activity-id').value;
+    const title  = document.getElementById('activity-title').value.trim();
+    const date   = document.getElementById('activity-date').value;
+    const time   = document.getElementById('activity-time').value;
+    const type   = document.getElementById('activity-type').value;
+    const vendor = document.getElementById('activity-vendor').value.trim();
+
+    if (!title || !date) {
+      alert('Please enter a title and date.');
+      return;
+    }
+
+    if (id) {
+      const idx = activities.findIndex(a => a.id === id);
+      if (idx >= 0) activities[idx] = { ...activities[idx], title, date, time, type, vendor };
+    } else {
+      activities.push({ id: uuid(), title, date, time, type, vendor });
+    }
+    saveActivities();
+    closeModal(activityModal);
+    renderTimeline();
+  });
+
+  activityDeleteBtn.addEventListener('click', () => {
+    const id = document.getElementById('activity-id').value;
+    if (!id) return;
+    if (!confirm('Delete this activity?')) return;
+    activities = activities.filter(a => a.id !== id);
+    saveActivities();
+    closeModal(activityModal);
+    renderTimeline();
+  });
 
   // ============================
   // HTML Escape
@@ -1234,10 +1520,11 @@
 
   // --- Load data from Firestore (with localStorage fallback) then start app ---
   async function initData() {
-    const [fbBudgets, fbExpenses, fbShopping] = await Promise.all([
+    const [fbBudgets, fbExpenses, fbShopping, fbActivities] = await Promise.all([
       Firestore.loadCollection('budgets'),
       Firestore.loadCollection('expenses'),
-      Firestore.loadCollection('shopping')
+      Firestore.loadCollection('shopping'),
+      Firestore.loadCollection('activities')
     ]);
 
     // Use Firestore data if available, otherwise fall back to localStorage
@@ -1255,11 +1542,13 @@
     }
     expenses = fbExpenses || Storage.get('expenses', []);
     shoppingItems = fbShopping || Storage.get('shopping', []);
+    activities = fbActivities || Storage.get('activities', []);
 
     // Sync localStorage with whatever we loaded (keeps offline cache fresh)
     Storage.set('totalBudget', totalBudgetAmount);
     Storage.set('expenses', expenses);
     Storage.set('shopping', shoppingItems);
+    Storage.set('activities', activities);
   }
 
 })();
