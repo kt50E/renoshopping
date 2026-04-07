@@ -996,7 +996,7 @@
   const ACTIVITY_COLORS = {
     'Vendor office visit': '#8B5CF6',
     'Onsite visit':        '#3B82F6',
-    'Installation':        '#10B981',
+    'Installation':        '#EC4899',
     'Virtual meeting':     '#14B8A6',
     'Delivery':            '#F59E0B',
     'Others':              '#6B7280'
