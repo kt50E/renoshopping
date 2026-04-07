@@ -455,10 +455,12 @@
           <div class="expense-day-name">${dayName}</div>
         </div>
         <div class="expense-info">
-          <div class="expense-desc">${escapeHtml(e.description || 'Untitled')}</div>
+          <div class="expense-desc-line">
+            <span class="expense-desc">${escapeHtml(e.description || 'Untitled')}</span>
+            <span class="expense-cat-pill">${escapeHtml(e.category || 'Uncategorized')}</span>
+          </div>
           ${e.notes ? `<div class="expense-notes-text">${escapeHtml(e.notes)}</div>` : ''}
         </div>
-        <span class="expense-cat-pill">${escapeHtml(e.category || 'Uncategorized')}</span>
         <div class="expense-amount-cell">${formatCurrency(e.amount)}</div>
         <div class="expense-actions">
           <button class="btn-icon edit-expense" title="Edit">✏️</button>

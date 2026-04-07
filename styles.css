@@ -1916,10 +1916,10 @@ tr.purchased {
 .expense-row {
   position: relative;
   display: grid;
-  grid-template-columns: 56px 1fr auto auto;
+  grid-template-columns: 56px 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 16px 76px 16px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--gray-100);
   transition: background 0.12s;
 }
@@ -1949,11 +1949,17 @@ tr.purchased {
 .expense-info {
   min-width: 0;
 }
+.expense-desc-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2px;
+}
 .expense-desc {
   font-size: 14.5px;
   font-weight: 600;
   color: var(--gray-800);
-  margin-bottom: 2px;
   word-break: break-word;
 }
 .expense-notes-text {
@@ -1963,12 +1969,14 @@ tr.purchased {
 }
 .expense-cat-pill {
   display: inline-block;
-  padding: 3px 9px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--gray-100);
-  color: var(--gray-600);
-  font-size: 11px;
+  color: var(--gray-500);
+  font-size: 10.5px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   white-space: nowrap;
 }
 .expense-amount-cell {
@@ -1978,10 +1986,15 @@ tr.purchased {
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
+  transition: transform 0.15s ease-out;
+}
+.expense-row:hover .expense-amount-cell,
+.expense-row:focus-within .expense-amount-cell {
+  transform: translateX(-66px);
 }
 .expense-actions {
   position: absolute;
-  right: 14px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -2001,15 +2014,18 @@ tr.purchased {
     grid-template-columns: 48px 1fr auto;
     grid-template-areas:
       "day info amount"
-      "day cat  actions";
+      "day info actions";
     gap: 4px 12px;
     padding: 16px 20px;
   }
-  .expense-day-col   { grid-area: day; }
-  .expense-info      { grid-area: info; }
+  .expense-day-col     { grid-area: day; align-self: start; }
+  .expense-info        { grid-area: info; }
   .expense-amount-cell { grid-area: amount; font-size: 14px; }
-  .expense-cat-pill  { grid-area: cat; justify-self: start; }
-  /* On mobile (no hover) actions must be visible and in flow. */
+  /* No hover on mobile — disable the slide and keep actions visible. */
+  .expense-row:hover .expense-amount-cell,
+  .expense-row:focus-within .expense-amount-cell {
+    transform: none;
+  }
   .expense-actions {
     grid-area: actions;
     position: static;
