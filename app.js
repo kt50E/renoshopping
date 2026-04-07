@@ -490,10 +490,32 @@
   const itemForm = document.getElementById('item-form');
   const itemModalTitle = document.getElementById('item-modal-title');
   const shoppingBody = document.getElementById('shopping-body');
+  const shoppingCards = document.getElementById('shopping-cards');
+  const shoppingTableWrapper = document.getElementById('shopping-table-wrapper');
+  const shoppingCardsWrapper = document.getElementById('shopping-cards-wrapper');
+  const shoppingViewBtns = document.querySelectorAll('#tab-shopping .view-toggle-btn');
   const shoppingFilterRoom = document.getElementById('shopping-filter-room');
   const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
   const hidePurchased = document.getElementById('hide-purchased');
   const shoppingTotal = document.getElementById('shopping-total');
+
+  // View mode persists across sessions. Default to 'cards'.
+  let shoppingView = Storage.get('shoppingView', 'cards');
+
+  function applyShoppingView() {
+    shoppingTableWrapper.hidden = shoppingView !== 'table';
+    shoppingCardsWrapper.hidden = shoppingView !== 'cards';
+    shoppingViewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === shoppingView));
+  }
+
+  shoppingViewBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      shoppingView = btn.dataset.view;
+      Storage.set('shoppingView', shoppingView);
+      applyShoppingView();
+      renderShopping();
+    });
+  });
   const itemStatus = document.getElementById('item-status');
   const purchaseDateGroup = document.getElementById('purchase-date-group');
   const itemPurchaseDate = document.getElementById('item-purchase-date');
@@ -568,6 +590,10 @@
     }
 
     updateSortHeaders('#tab-shopping', shoppingSort);
+    applyShoppingView();
+
+    // Always render cards (cheap) so the toggle is instant; render table only when visible.
+    renderShoppingCards(filtered);
 
     if (filtered.length === 0) {
       shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="11">No items to show.</td></tr>';
@@ -652,6 +678,75 @@
     // Thumbnail click → lightbox
     shoppingBody.querySelectorAll('.item-thumbnail').forEach(img => {
       img.addEventListener('click', () => {
+        openLightbox(img.dataset.fullSrc);
+      });
+    });
+  }
+
+  function renderShoppingCards(filtered) {
+    if (filtered.length === 0) {
+      shoppingCards.innerHTML = '<div class="empty-row">No items to show.</div>';
+      return;
+    }
+
+    shoppingCards.innerHTML = filtered.map(item => {
+      const total = (item.qty || 1) * (item.price || 0);
+      const status = item.status || 'Wishlist';
+      const statusClass = status.toLowerCase();
+
+      const imgHtml = item.imageUrl
+        ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
+        : `<svg class="placeholder-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+
+      // Build meta line: Room · Type · Vendor · Qty N · 🔗
+      const metaParts = [];
+      if (item.room)     metaParts.push(escapeHtml(item.room));
+      if (item.material) metaParts.push(escapeHtml(item.material));
+      if (item.vendor)   metaParts.push(escapeHtml(item.vendor));
+      if (item.qty && item.qty > 1) metaParts.push('Qty ' + item.qty);
+      if (item.link)     metaParts.push(`<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="Open product link">🔗 Link</a>`);
+      const metaHtml = metaParts.join(' <span class="shopping-card-meta-sep">·</span> ');
+
+      const notesHtml = item.notes
+        ? `<div class="shopping-card-notes">${escapeHtml(item.notes)}</div>`
+        : '';
+
+      return `
+        <div class="shopping-card ${item.purchased ? 'purchased' : ''}" data-id="${item.id}">
+          <div class="shopping-card-img">${imgHtml}</div>
+          <div class="shopping-card-info">
+            <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
+            <div class="shopping-card-meta">${metaHtml || '<span style="color:var(--gray-400)">No details yet</span>'}</div>
+            ${notesHtml}
+          </div>
+          <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
+          <div class="shopping-card-bottom">
+            <span class="status-pill ${statusClass}">${status}</span>
+            <div class="card-actions">
+              <button class="btn-icon edit-card-item" title="Edit">✏️</button>
+              <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire up events for card view
+    shoppingCards.querySelectorAll('.edit-card-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        editItem(btn.closest('.shopping-card').dataset.id);
+      });
+    });
+    shoppingCards.querySelectorAll('.delete-card-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteItem(btn.closest('.shopping-card').dataset.id);
+      });
+    });
+    shoppingCards.querySelectorAll('.item-thumbnail').forEach(img => {
+      img.addEventListener('click', (e) => {
+        e.stopPropagation();
         openLightbox(img.dataset.fullSrc);
       });
     });

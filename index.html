@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RenoTracker — Renovation Expense & Shopping Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 
@@ -281,7 +281,11 @@
 
     <!-- Shopping List Tab -->
     <main id="tab-shopping" class="tab-content" hidden>
-      <div class="page-header">
+      <div class="page-header shopping-page-header">
+        <div class="view-toggle" role="tablist">
+          <button id="shopping-view-cards" class="view-toggle-btn active" data-view="cards">▦ Cards</button>
+          <button id="shopping-view-table" class="view-toggle-btn" data-view="table">☰ Table</button>
+        </div>
         <button id="add-item-btn" class="btn btn-primary">+ Add Item</button>
       </div>
 
@@ -322,7 +326,15 @@
         </label>
       </div>
 
-      <div class="table-wrapper">
+      <!-- Cards View -->
+      <div id="shopping-cards-wrapper" class="shopping-cards-wrapper">
+        <div id="shopping-cards" class="shopping-cards">
+          <div class="empty-row">Your shopping list is empty. Add items to get started!</div>
+        </div>
+      </div>
+
+      <!-- Table View -->
+      <div id="shopping-table-wrapper" class="table-wrapper" hidden>
         <table class="data-table">
           <thead>
             <tr>
@@ -583,6 +595,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>
