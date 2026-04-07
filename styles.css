@@ -1410,7 +1410,7 @@ tr.purchased {
 }
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-auto-rows: minmax(110px, auto);
 }
 .calendar-cell {
@@ -1468,9 +1468,9 @@ tr.purchased {
   padding: 3px 6px;
   border-radius: 4px;
   color: #fff;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   cursor: pointer;
   line-height: 1.3;
   font-weight: 500;
