@@ -433,7 +433,7 @@
       return `
         <div class="expense-group">
           <div class="expense-group-header">
-            <span class="expense-group-title">${escapeHtml(monthLabel(key).toUpperCase())}</span>
+            <span class="expense-group-title">${escapeHtml(monthLabel(key))}</span>
             <span class="expense-group-total">${formatCurrency(subtotal)}</span>
           </div>
           <div class="expense-group-body">
@@ -798,7 +798,7 @@
       return `
         <div class="room-group">
           <div class="room-group-header">
-            <span class="room-group-title">${escapeHtml(room.toUpperCase())}</span>
+            <span class="room-group-title">${escapeHtml(room)}</span>
             <div class="room-group-meta">
               <span class="room-group-count">${countLabel}</span>
               <span class="expense-stats-sep">·</span>
@@ -1266,7 +1266,7 @@
       return `
         <div class="room-group">
           <div class="room-group-header">
-            <span class="room-group-title">${escapeHtml(room.toUpperCase())}</span>
+            <span class="room-group-title">${escapeHtml(room)}</span>
             <div class="room-group-meta">
               <span class="room-group-count">${countLabel}</span>
               <span class="expense-stats-sep">·</span>
