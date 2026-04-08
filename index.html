@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RenoTracker — Renovation Expense & Shopping Tracker</title>
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body>
 
@@ -84,29 +87,32 @@
 
         <!-- Dashboard Tab -->
         <main id="tab-dashboard" class="tab-content active">
-      <!-- Motivational Message -->
-      <div id="budget-message" class="budget-message"></div>
+      <!-- Motivational Message (inline, not card) -->
+      <div id="budget-message" class="budget-message" aria-live="polite"></div>
 
-      <!-- Summary Cards -->
-      <div class="summary-cards">
-        <div class="summary-card">
-          <span class="summary-label">Total Budget</span>
-          <span id="total-budget" class="summary-value">$0.00</span>
-          <button id="edit-budget-btn" class="btn-icon" title="Edit budget" style="align-self:flex-end;">✏️</button>
+      <!-- Hero: Remaining is the only number that matters at a glance -->
+      <section id="dashboard-hero" class="dashboard-hero">
+        <div class="hero-main">
+          <span class="hero-label">Remaining</span>
+          <span id="total-remaining" class="hero-value">$0.00</span>
+          <div class="hero-substats">
+            <span class="hero-substat">
+              <span class="hero-substat-label">Budget</span>
+              <span id="total-budget" class="hero-substat-value">$0.00</span>
+              <button id="edit-budget-btn" class="btn-icon hero-edit-btn" aria-label="Edit budget" title="Edit budget">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            </span>
+            <span class="hero-substat">
+              <span class="hero-substat-label">Spent</span>
+              <span id="total-spent" class="hero-substat-value">$0.00</span>
+            </span>
+          </div>
         </div>
-        <div class="summary-card">
-          <span class="summary-label">Total Spent</span>
-          <span id="total-spent" class="summary-value">$0.00</span>
+        <!-- Budget Progress Bar (inline, no card wrapper) -->
+        <div id="budget-progress" class="budget-progress-section">
         </div>
-        <div class="summary-card">
-          <span class="summary-label">Remaining</span>
-          <span id="total-remaining" class="summary-value">$0.00</span>
-        </div>
-      </div>
-
-      <!-- Budget Progress Bar -->
-      <div id="budget-progress" class="budget-progress-section">
-      </div>
+      </section>
 
       <!-- Spending Breakdown Chart -->
       <div id="spending-charts" class="spending-charts" hidden>
@@ -213,8 +219,15 @@
       </div>
 
       <!-- Grouped expenses -->
-      <div id="expense-groups" class="expense-groups">
-        <div class="empty-row">No expenses recorded yet.</div>
+      <div id="expense-groups" class="expense-groups" aria-live="polite">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <h3 class="empty-state-title">No expenses yet</h3>
+          <p class="empty-state-text">Track every receipt as it happens. You'll thank yourself when budget time rolls around.</p>
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('add-expense-btn').click()">+ Add your first expense</button>
+        </div>
       </div>
 
       <!-- Add/Edit Expense Modal -->
@@ -336,8 +349,15 @@
 
       <!-- Cards View -->
       <div id="shopping-cards-wrapper" class="shopping-cards-wrapper">
-        <div id="shopping-cards" class="room-groups">
-          <div class="empty-row">Your wishlist is empty. Add items you're considering!</div>
+        <div id="shopping-cards" class="room-groups" aria-live="polite">
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </div>
+            <h3 class="empty-state-title">Start your wishlist</h3>
+            <p class="empty-state-text">Save the things you're considering before you commit. A good wishlist saves you from a great regret.</p>
+            <button type="button" class="btn btn-primary" onclick="document.getElementById('add-item-btn').click()">+ Add your first item</button>
+          </div>
         </div>
       </div>
 
@@ -490,8 +510,15 @@
         </div>
       </div>
 
-      <div id="purchased-groups" class="room-groups">
-        <div class="empty-row">Nothing here yet — items you mark as Purchased on your Wishlist will show up here, grouped by room.</div>
+      <div id="purchased-groups" class="room-groups" aria-live="polite">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3 class="empty-state-title">Nothing purchased yet</h3>
+          <p class="empty-state-text">When you mark a wishlist item as Purchased, it'll show up here, grouped by room. The receipts of your reno.</p>
+          <button type="button" class="btn btn-outline" onclick="document.querySelector('[data-tab=&quot;shopping&quot;]').click()">Go to Wishlist</button>
+        </div>
       </div>
     </main>
 
@@ -616,6 +643,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="app.js?v=29"></script>
+  <script src="app.js?v=30"></script>
 </body>
 </html>

@@ -243,10 +243,10 @@
 
     const remEl = document.getElementById('total-remaining');
     remEl.textContent = formatCurrency(remaining);
-    remEl.className = 'summary-value ' + (remaining < 0 ? 'over-budget' : 'under-budget');
+    remEl.className = 'hero-value ' + (remaining < 0 ? 'over-budget' : 'under-budget');
 
     if (totalBudgetAmount === 0) {
-      budgetProgress.innerHTML = '<p class="empty-state">Set your total renovation budget to track spending.</p>';
+      budgetProgress.innerHTML = '<p class="budget-progress-hint">Set a total budget above to start tracking your spending.</p>';
       return;
     }
 
@@ -400,7 +400,7 @@
     expenseStatsTotal.textContent = formatCurrency(totalAmount) + ' total';
 
     if (filtered.length === 0) {
-      expenseGroupsEl.innerHTML = '<div class="empty-row">No expenses found.</div>';
+      expenseGroupsEl.innerHTML = '<div class="empty-row">No expenses match these filters. Try clearing them.</div>';
       return;
     }
 
@@ -642,7 +642,7 @@
     renderShoppingCards(filtered);
 
     if (filtered.length === 0) {
-      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="10">No items to show.</td></tr>';
+      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="10">No items match these filters.</td></tr>';
     } else {
       shoppingBody.innerHTML = filtered.map(item => {
         const total = (item.qty || 1) * (item.price || 0);
@@ -765,7 +765,7 @@
 
   function renderShoppingCards(filtered) {
     if (filtered.length === 0) {
-      shoppingCards.innerHTML = '<div class="empty-row">No items to show.</div>';
+      shoppingCards.innerHTML = '<div class="empty-row">No items match these filters.</div>';
       return;
     }
 
@@ -1165,7 +1165,14 @@
     purchasedStatsTotal.textContent = formatCurrency(totalAmount) + ' total';
 
     if (purchased.length === 0) {
-      purchasedGroupsEl.innerHTML = '<div class="empty-row">Nothing here yet — items you mark as Purchased on your Wishlist will show up here, grouped by room.</div>';
+      purchasedGroupsEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </div>
+          <h3 class="empty-state-title">Nothing purchased yet</h3>
+          <p class="empty-state-text">When you mark a wishlist item as Purchased, it'll show up here, grouped by room. The receipts of your reno.</p>
+        </div>`;
       return;
     }
 
