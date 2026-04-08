@@ -263,6 +263,15 @@
         <div class="budget-bar-fill ${over ? 'over' : ''}" style="width:${pct}%"></div>
       </div>
     `;
+    // Trigger shimmer pulse on each render so a budget/spend change feels alive
+    const fill = budgetProgress.querySelector('.budget-bar-fill');
+    if (fill) {
+      // Force reflow so the class re-application restarts the animation
+      requestAnimationFrame(() => {
+        fill.classList.add('pulse');
+        setTimeout(() => fill.classList.remove('pulse'), 1100);
+      });
+    }
   }
 
   editBudgetBtn.addEventListener('click', () => {
@@ -888,9 +897,10 @@
     };
 
     let savedItem;
+    let wasPurchased = false;
     if (id) {
       savedItem = shoppingItems.find(x => x.id === id);
-      const wasPurchased = savedItem && savedItem.purchased;
+      wasPurchased = !!(savedItem && savedItem.purchased);
       if (savedItem) Object.assign(savedItem, data);
     } else {
       savedItem = { id: uuid(), purchased: data.status === 'Purchased', ...data };
@@ -905,7 +915,8 @@
       savedItem.imageUrl = '';
     }
 
-    const justPurchased = savedItem.purchased && data.status === 'Purchased';
+    // Only celebrate the transition from wishlist -> purchased (not every save)
+    const justPurchased = savedItem.purchased && !wasPurchased;
     saveShoppingItems();
     syncExpenseFromItem(savedItem);
     closeModal(itemModal);
@@ -1167,8 +1178,23 @@
     if (purchased.length === 0) {
       purchasedGroupsEl.innerHTML = `
         <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <div class="empty-state-illustration">
+            <svg viewBox="0 0 140 110" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M30 56 L70 24 L110 56 L110 96 L30 96 Z" fill="var(--primary-light)" stroke="currentColor"/>
+              <path d="M22 60 L70 22 L118 60" stroke-width="2.2"/>
+              <path d="M60 96 L60 74 Q60 70 64 70 L76 70 Q80 70 80 74 L80 96" fill="white" stroke="currentColor"/>
+              <circle cx="76" cy="84" r="1.2" fill="currentColor" stroke="none"/>
+              <rect x="38" y="64" width="14" height="14" rx="1" fill="white" stroke="currentColor"/>
+              <line x1="45" y1="64" x2="45" y2="78" stroke-width="1.4"/>
+              <line x1="38" y1="71" x2="52" y2="71" stroke-width="1.4"/>
+              <rect x="88" y="64" width="14" height="14" rx="1" fill="white" stroke="currentColor"/>
+              <line x1="95" y1="64" x2="95" y2="78" stroke-width="1.4"/>
+              <line x1="88" y1="71" x2="102" y2="71" stroke-width="1.4"/>
+              <path d="M92 38 L92 28 L100 28 L100 46" stroke-width="2"/>
+              <circle cx="116" cy="32" r="12" fill="var(--primary)" stroke="currentColor" stroke-width="2"/>
+              <path d="M110 32 L114 36 L122 28" stroke="white" stroke-width="2.4"/>
+              <line x1="14" y1="98" x2="126" y2="98" stroke-width="1.6" opacity="0.5"/>
+            </svg>
           </div>
           <h3 class="empty-state-title">Nothing purchased yet</h3>
           <p class="empty-state-text">When you mark a wishlist item as Purchased, it'll show up here, grouped by room. The receipts of your reno.</p>
