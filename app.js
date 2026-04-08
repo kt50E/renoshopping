@@ -1061,6 +1061,49 @@
     }
     chartsEl.hidden = false;
 
+    // --- Roll up tiny categories into "Other" so the donut stays legible.
+    // Anything below 2% of total gets grouped, but only when 2+ such
+    // categories exist (a single small wedge keeps its own identity).
+    const SMALL_THRESHOLD = 0.02;
+    const OTHER_COLOR = '#B8AEA0'; // warm neutral that doesn't compete with sage
+    const smallIndices = [];
+    categories.forEach((cat, i) => {
+      const pct = totalSpent > 0 ? cat.amount / totalSpent : 0;
+      if (pct < SMALL_THRESHOLD) smallIndices.push(i);
+    });
+    const shouldRollUp = smallIndices.length >= 2;
+
+    // donutWedges: what the donut chart actually draws.
+    // originalToDonut: maps original category index -> donut wedge index
+    // (used for hover sync between full legend and rolled-up donut).
+    const donutWedges = [];
+    const originalToDonut = new Array(categories.length);
+    const smallSet = shouldRollUp ? new Set(smallIndices) : new Set();
+
+    categories.forEach((cat, i) => {
+      if (smallSet.has(i)) return;
+      const wedgeIdx = donutWedges.length;
+      donutWedges.push({
+        name: cat.name,
+        amount: cat.amount,
+        color: CHART_COLORS[wedgeIdx % CHART_COLORS.length]
+      });
+      originalToDonut[i] = wedgeIdx;
+    });
+    if (smallSet.size > 0) {
+      const otherIndices = [...smallSet];
+      const otherTotal = otherIndices.reduce((s, i) => s + categories[i].amount, 0);
+      const otherNames = otherIndices.map(i => categories[i].name).join(', ');
+      const otherWedgeIdx = donutWedges.length;
+      donutWedges.push({
+        name: `Other (${otherIndices.length})`,
+        tooltipName: `Other: ${otherNames}`,
+        amount: otherTotal,
+        color: OTHER_COLOR
+      });
+      otherIndices.forEach(i => { originalToDonut[i] = otherWedgeIdx; });
+    }
+
     // --- Donut Chart (SVG) ---
     const donutSvg = document.getElementById('donut-chart');
     const donutLegend = document.getElementById('donut-legend');
@@ -1072,23 +1115,22 @@
 
     let segments = '';
     let offset = 0;
-
-    // Calculate midpoint angles for each segment (used for pop-out on hover)
     const segmentData = [];
-    categories.forEach((cat, i) => {
-      const pct = totalSpent > 0 ? cat.amount / totalSpent : 0;
+
+    donutWedges.forEach((wedge, i) => {
+      const pct = totalSpent > 0 ? wedge.amount / totalSpent : 0;
       const dashLength = pct * circumference;
-      const color = CHART_COLORS[i % CHART_COLORS.length];
       const midAngle = ((offset + dashLength / 2) / circumference) * 2 * Math.PI;
+      const tooltipLabel = wedge.tooltipName || wedge.name;
 
       segments += `<circle
         class="donut-segment"
         data-index="${i}"
         cx="100" cy="100" r="${radius}"
-        stroke="${color}"
+        stroke="${wedge.color}"
         stroke-dasharray="${dashLength} ${circumference - dashLength}"
         stroke-dashoffset="${-offset}"
-      ><title>${escapeHtml(cat.name)}: ${formatCurrency(cat.amount)} (${(pct * 100).toFixed(1)}%)</title></circle>`;
+      ><title>${escapeHtml(tooltipLabel)}: ${formatCurrency(wedge.amount)} (${(pct * 100).toFixed(1)}%)</title></circle>`;
 
       segmentData.push({ midAngle });
       offset += dashLength;
@@ -1096,23 +1138,25 @@
 
     donutSvg.innerHTML = segments;
 
-    // Legend
+    // Legend shows ALL original categories (no information loss).
+    // Each legend item points back to its donut wedge via data-donut-index.
     donutLegend.innerHTML = categories.map((cat, i) => {
-      const color = CHART_COLORS[i % CHART_COLORS.length];
+      const donutIdx = originalToDonut[i];
+      const color = donutWedges[donutIdx].color;
       const pct = totalSpent > 0 ? ((cat.amount / totalSpent) * 100).toFixed(1) : 0;
-      return `<span class="legend-item" data-index="${i}">
+      const isRolledUp = smallSet.has(i);
+      return `<span class="legend-item${isRolledUp ? ' legend-rolled-up' : ''}" data-donut-index="${donutIdx}">
         <span class="legend-dot" style="background:${color}"></span>
         ${escapeHtml(cat.name)} <span class="legend-amount">${pct}%</span>
       </span>`;
     }).join('');
 
     // Hover interaction
-    function highlightSegment(index) {
+    function highlightSegment(donutIndex) {
       donutSvg.querySelectorAll('.donut-segment').forEach(seg => {
         const i = parseInt(seg.dataset.index);
-        if (i === index) {
+        if (i === donutIndex) {
           seg.classList.add('donut-hover');
-          // Pop out the segment
           const angle = segmentData[i].midAngle;
           const tx = Math.cos(angle) * 6;
           const ty = Math.sin(angle) * 6;
@@ -1123,9 +1167,9 @@
         }
       });
       donutLegend.querySelectorAll('.legend-item').forEach(item => {
-        const i = parseInt(item.dataset.index);
-        item.classList.toggle('legend-active', i === index);
-        item.classList.toggle('legend-dimmed', i !== index);
+        const i = parseInt(item.dataset.donutIndex);
+        item.classList.toggle('legend-active', i === donutIndex);
+        item.classList.toggle('legend-dimmed', i !== donutIndex);
       });
     }
 
@@ -1145,7 +1189,7 @@
     });
 
     donutLegend.querySelectorAll('.legend-item').forEach(item => {
-      item.addEventListener('mouseenter', () => highlightSegment(parseInt(item.dataset.index)));
+      item.addEventListener('mouseenter', () => highlightSegment(parseInt(item.dataset.donutIndex)));
       item.addEventListener('mouseleave', resetSegments);
     });
 
