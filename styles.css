@@ -20,7 +20,7 @@
   --gray-100: #EFE8DD;
   --gray-200: #E4DCCE;
   --gray-300: #CFC5B3;
-  --gray-400: #A3998B;
+  --gray-400: #8E8475;
   --gray-500: #756F65;
   --gray-600: #514C44;
   --gray-700: #3D3933;
@@ -43,6 +43,26 @@ body {
   line-height: 1.5;
   min-height: 100vh;
   font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Visible keyboard focus everywhere */
+*:focus {
+  outline: none;
+}
+*:focus-visible {
+  outline: 2px solid var(--primary-dark);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+button:focus-visible,
+.btn:focus-visible,
+.sidebar-nav-btn:focus-visible {
+  outline-offset: 3px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
 }
 
 h1, h2, h3, h4, h5, h6,
@@ -633,13 +653,37 @@ h1, h2, h3, h4, h5, h6,
 
 @media (max-width: 720px) {
   .dashboard-hero {
-    padding: 24px 22px 22px;
+    padding: 22px 20px 20px;
+    border-radius: 14px;
+    gap: 22px;
   }
   .hero-value {
-    font-size: 42px;
+    font-size: 40px;
+  }
+  .hero-label {
+    font-size: 11px;
   }
   .hero-substats {
-    gap: 18px;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .hero-substat-value {
+    font-size: 18px;
+  }
+  .dashboard-hero .budget-progress-section {
+    padding-top: 18px;
+  }
+  /* Donut chart on small screens: shrink and tighten card padding */
+  .chart-card {
+    padding: 18px 16px;
+  }
+  .donut-wrapper {
+    width: 220px;
+    height: 220px;
+    margin-bottom: 18px;
+  }
+  .donut-center-amount {
+    font-size: 20px;
   }
 }
 
@@ -1891,8 +1935,8 @@ tr.purchased {
   letter-spacing: 0.2px;
 }
 .shopping-card .status-pill.wishlist {
-  background: #FEF9C3;
-  color: #854D0E;
+  background: var(--primary-light);
+  color: var(--primary-dark);
 }
 .shopping-card .status-pill.selected {
   background: #DBEAFE;
@@ -2183,7 +2227,7 @@ tr.purchased {
 .room-groups {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 .room-group {
   background: #fff;
@@ -2195,7 +2239,7 @@ tr.purchased {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 20px;
+  padding: 10px 18px;
   background: var(--gray-50);
   border-bottom: 1px solid var(--gray-200);
 }
@@ -2231,7 +2275,7 @@ tr.purchased {
   border: none;
   border-bottom: 1px solid var(--gray-100);
   border-radius: 0;
-  padding: 14px 18px;
+  padding: 10px 18px;
 }
 .room-group-body .shopping-card:last-child {
   border-bottom: none;

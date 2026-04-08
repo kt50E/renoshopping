@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
 
@@ -81,7 +81,7 @@
       <div class="main-area">
         <div id="sidebar-overlay" class="sidebar-overlay"></div>
         <header class="topbar">
-          <button id="mobile-menu-btn" class="mobile-menu-btn" title="Menu">☰</button>
+          <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Open menu" title="Menu">☰</button>
           <h2 id="topbar-title">Budget Dashboard</h2>
         </header>
 
@@ -134,7 +134,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3 id="budget-modal-title">Set Total Budget</h3>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
           </div>
           <form id="budget-form">
             <div class="form-group">
@@ -235,7 +235,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3 id="expense-modal-title">Add Expense</h3>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
           </div>
           <form id="expense-form">
             <div class="form-group">
@@ -396,7 +396,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3 id="item-modal-title">Add to Wishlist</h3>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
           </div>
           <form id="item-form">
             <div class="form-group">
@@ -471,7 +471,7 @@
                 </div>
                 <div id="image-upload-preview" class="image-upload-preview" hidden>
                   <img id="image-preview-img" src="" alt="Preview">
-                  <button type="button" id="image-remove-btn" class="image-remove-btn" title="Remove image">&times;</button>
+                  <button type="button" id="image-remove-btn" class="image-remove-btn" aria-label="Remove image" title="Remove image">&times;</button>
                 </div>
               </div>
             </div>
@@ -526,9 +526,9 @@
     <main id="tab-timeline" class="tab-content" hidden>
       <div class="page-header timeline-header">
         <div class="timeline-header-left">
-          <button id="timeline-prev" class="btn-icon" title="Previous month">‹</button>
+          <button id="timeline-prev" class="btn-icon" aria-label="Previous month" title="Previous month">‹</button>
           <h3 id="timeline-month-label">—</h3>
-          <button id="timeline-next" class="btn-icon" title="Next month">›</button>
+          <button id="timeline-next" class="btn-icon" aria-label="Next month" title="Next month">›</button>
           <button id="timeline-today" class="btn btn-outline btn-sm">Today</button>
         </div>
         <div class="timeline-header-right">
@@ -568,7 +568,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3 id="activity-modal-title">Add Activity</h3>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
           </div>
           <form id="activity-form">
             <div class="form-group">
@@ -616,7 +616,7 @@
         <div class="lightbox-backdrop"></div>
         <div class="lightbox-content">
           <img id="lightbox-img" src="" alt="Full size preview">
-          <button id="lightbox-close" class="lightbox-close">&times;</button>
+          <button id="lightbox-close" class="lightbox-close" aria-label="Close image">&times;</button>
         </div>
       </div>
 
@@ -627,7 +627,7 @@
         <div class="modal-content">
           <div class="modal-header">
             <h3>Export Data</h3>
-            <button class="modal-close">&times;</button>
+            <button class="modal-close" aria-label="Close dialog">&times;</button>
           </div>
           <div style="padding:24px; display:flex; flex-direction:column; gap:12px;">
             <p style="color:var(--gray-500); font-size:14px;">Choose a format to export all your budgets, expenses, and shopping list data.</p>
@@ -643,6 +643,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=31"></script>
 </body>
 </html>

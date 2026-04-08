@@ -462,8 +462,8 @@
         </div>
         <div class="expense-amount-cell">${formatCurrency(e.amount)}</div>
         <div class="expense-actions">
-          <button class="btn-icon edit-expense" title="Edit">✏️</button>
-          <button class="btn-icon delete-expense" title="Delete">🗑️</button>
+          <button class="btn-icon edit-expense" aria-label="Edit expense" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn-icon delete-expense" aria-label="Delete expense" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
         </div>
       </div>
     `;
@@ -672,8 +672,8 @@
             <td>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View</a>` : '-'}</td>
             <td>
               <div style="display:flex;gap:4px">
-                <button class="btn-icon edit-item" title="Edit">✏️</button>
-                <button class="btn-icon delete-item" title="Delete">🗑️</button>
+                <button class="btn-icon edit-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="btn-icon delete-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
               </div>
             </td>
           </tr>
@@ -755,8 +755,8 @@
         <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
         <div class="shopping-card-bottom">
           <div class="card-actions">
-            <button class="btn-icon edit-card-item" title="Edit">✏️</button>
-            <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
+            <button class="btn-icon edit-card-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="btn-icon delete-card-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
           </div>
         </div>
       </div>
@@ -1265,8 +1265,8 @@
         <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
         <div class="shopping-card-bottom">
           <div class="card-actions">
-            <button class="btn-icon edit-card-item" title="Edit">✏️</button>
-            <button class="btn-icon delete-card-item" title="Delete">🗑️</button>
+            <button class="btn-icon edit-card-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+            <button class="btn-icon delete-card-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
           </div>
         </div>
       </div>
@@ -1453,7 +1453,7 @@
             <div class="activity-info-title">${escapeHtml(a.title)}</div>
             <div class="activity-info-meta">${metaParts.filter(Boolean).join(' · ')}</div>
           </div>
-          <button class="btn-icon edit-activity" title="Edit">✏️</button>
+          <button class="btn-icon edit-activity" aria-label="Edit activity" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         </div>
       `;
     };
