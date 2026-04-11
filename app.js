@@ -36,7 +36,8 @@
 
   // Only these Google accounts can access the app
   const ALLOWED_EMAILS = [
-    'turajanek@gmail.com'
+    'turajanek@gmail.com',
+    'stevenho413@gmail.com'
   ];
 
   // --- Firestore Helpers ---
