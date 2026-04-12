@@ -609,10 +609,10 @@ h1, h2, h3, h4, h5, h6,
 .hero-label {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 600;
-  color: var(--gray-500);
+  font-weight: 500;
+  color: var(--gray-400);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.06em;
 }
 
 .hero-value {
@@ -644,14 +644,14 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .hero-substat-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  color: var(--gray-500);
+  color: var(--gray-400);
 }
 
 .hero-substat-value {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--gray-800);
   font-variant-numeric: tabular-nums;
@@ -807,9 +807,11 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .chart-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
   color: var(--gray-800);
+  letter-spacing: -0.01em;
   margin-bottom: 20px;
 }
 
@@ -1985,11 +1987,12 @@ tr.purchased {
   padding: 16px 12px 8px;
 }
 .activity-group-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--gray-500);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  letter-spacing: -0.01em;
+  text-transform: none;
   padding: 0 0 8px;
   border-bottom: 1px solid var(--gray-200);
   margin-bottom: 10px;
@@ -2015,8 +2018,8 @@ tr.purchased {
   line-height: 1.1;
 }
 .activity-date-day {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: var(--gray-800);
 }
 .activity-date-month {
@@ -2031,8 +2034,8 @@ tr.purchased {
   border-radius: 2px;
 }
 .activity-info-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--gray-800);
   margin-bottom: 2px;
 }
@@ -2381,9 +2384,9 @@ tr.purchased {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 16px 20px 14px;
-  background: transparent;
-  border-bottom: 1px solid var(--gray-100);
+  padding: 14px 20px 10px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
 }
 .expense-group-title {
   font-family: var(--font-heading);
@@ -2393,10 +2396,9 @@ tr.purchased {
   letter-spacing: -0.01em;
 }
 .expense-group-total {
-  font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--gray-800);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-400);
   font-variant-numeric: tabular-nums;
 }
 .expense-group-body {
@@ -2509,44 +2511,40 @@ tr.purchased {
 }
 .room-group {
   background: #fff;
-  box-shadow: var(--shadow);
-  border-radius: 12px;
+  border-bottom: 1px solid var(--gray-200);
   overflow: hidden;
-  transition: box-shadow 0.18s ease;
 }
-.room-group:hover {
-  box-shadow: var(--shadow-md);
+.room-group:last-child {
+  border-bottom: none;
 }
 .room-group-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  padding: 16px 20px 14px;
-  background: transparent;
-  border-bottom: 1px solid var(--gray-100);
+  padding: 14px 20px 10px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
 }
 .room-group-title {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--gray-800);
   letter-spacing: -0.01em;
 }
 .room-group-meta {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 13px;
-  color: var(--gray-500);
+  font-size: 12px;
+  color: var(--gray-400);
+  font-weight: 500;
 }
 .room-group-count {
-  color: var(--gray-500);
+  color: var(--gray-400);
 }
 .room-group-total {
-  font-family: var(--font-heading);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--gray-800);
+  color: var(--gray-400);
   font-variant-numeric: tabular-nums;
 }
 .room-group-body {
