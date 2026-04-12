@@ -190,7 +190,7 @@
       if (!t.hidden) t.classList.add('active');
       else t.classList.remove('active');
     });
-    topbarTitle.textContent = tabTitles[tabName] || tabName;
+    topbarTitle.innerHTML = `<span class="topbar-breadcrumb">RenoTracker</span> <span class="topbar-sep">›</span> ${tabTitles[tabName] || tabName}`;
     Storage.set('activeTab', tabName);
   }
 
