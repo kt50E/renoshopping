@@ -1202,82 +1202,59 @@
       const subtotal = items.reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
       const countLabel = items.length + (items.length === 1 ? ' item' : ' items');
 
-      return `
-        <div class="room-group">
-          <div class="room-group-header">
-            <span class="room-group-title">${escapeHtml(room)}</span>
-            <div class="room-group-meta">
-              <span class="room-group-count">${countLabel}</span>
-              <span class="expense-stats-sep">·</span>
-              <span class="room-group-total">${formatCurrency(subtotal)}</span>
+      const rows = items.map(item => {
+        const total = (item.qty || 1) * (item.price || 0);
+        let dateStr = '';
+        if (item.purchaseDate) {
+          const d = parseDateLocal(item.purchaseDate);
+          if (d) dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        return `
+          <div class="producto-row" data-id="${item.id}">
+            <div class="producto-thumb">${renderThumbnail(item)}</div>
+            <div class="producto-info">
+              <span class="producto-name">${escapeHtml(item.name || 'Untitled')}</span>
+              <span class="producto-brand">${escapeHtml(item.vendor || '')}</span>
             </div>
+            <div class="producto-col producto-type">${escapeHtml(item.material || '')}</div>
+            <div class="producto-col producto-qty">${item.qty || 1}</div>
+            <div class="producto-col producto-price">${total > 0 ? formatCurrency(total) : ''}</div>
+            <div class="producto-col producto-date">${dateStr}</div>
+            <div class="producto-status"><span class="status-dot status-purchased"></span> Purchased</div>
+            <div class="producto-actions">
+              <button class="btn-icon edit-item" aria-label="Edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon delete-item" aria-label="Delete" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+            </div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="producto-group">
+          <div class="producto-group-header">
+            <span class="producto-group-title">${escapeHtml(room)}</span>
+            <span class="producto-group-meta">${countLabel} · ${formatCurrency(subtotal)}</span>
           </div>
-          <div class="room-group-body">
-            ${items.map(renderPurchasedCard).join('')}
-          </div>
-        </div>
-      `;
+          ${rows}
+        </div>`;
     }).join('');
 
     // Wire up actions
-    purchasedGroupsEl.querySelectorAll('.edit-card-item').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        editItem(btn.closest('.shopping-card').dataset.id);
+    purchasedGroupsEl.querySelectorAll('.edit-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        editItem(btn.closest('.producto-row').dataset.id);
       });
     });
-    purchasedGroupsEl.querySelectorAll('.delete-card-item').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteItem(btn.closest('.shopping-card').dataset.id);
+    purchasedGroupsEl.querySelectorAll('.delete-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        deleteItem(btn.closest('.producto-row').dataset.id);
       });
     });
     purchasedGroupsEl.querySelectorAll('.item-thumbnail').forEach(img => {
-      img.addEventListener('click', (e) => {
-        e.stopPropagation();
+      img.addEventListener('click', () => {
         openLightbox(img.dataset.fullSrc);
       });
     });
-  }
-
-  function renderPurchasedCard(item) {
-    const total = (item.qty || 1) * (item.price || 0);
-
-    const imgHtml = renderThumbnail(item);
-
-    // Meta line: Type · Vendor · Qty · Purchased <date> · 🔗
-    const metaParts = [];
-    if (item.material) metaParts.push(escapeHtml(item.material));
-    if (item.vendor)   metaParts.push(escapeHtml(item.vendor));
-    if (item.qty && item.qty > 1) metaParts.push('Qty ' + item.qty);
-    if (item.purchaseDate) {
-      const d = parseDateLocal(item.purchaseDate);
-      if (d) metaParts.push('Purchased ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }));
-    }
-    if (item.link) metaParts.push(`<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="Open product link">🔗 Link</a>`);
-    const metaHtml = metaParts.join(' <span class="shopping-card-meta-sep">·</span> ');
-
-    const notesHtml = item.notes
-      ? `<div class="shopping-card-notes">${escapeHtml(item.notes)}</div>`
-      : '';
-
-    return `
-      <div class="shopping-card" data-id="${item.id}">
-        <div class="shopping-card-img">${imgHtml}</div>
-        <div class="shopping-card-info">
-          <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
-          <div class="shopping-card-meta">${metaHtml || '<span style="color:var(--gray-400)">No details</span>'}</div>
-          ${notesHtml}
-        </div>
-        <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
-        <div class="shopping-card-bottom">
-          <div class="card-actions">
-            <button class="btn-icon edit-card-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-            <button class="btn-icon delete-card-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
-          </div>
-        </div>
-      </div>
-    `;
   }
 
   // ============================

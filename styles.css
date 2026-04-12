@@ -499,7 +499,7 @@ h1, h2, h3, h4, h5, h6,
   background: white;
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -536,8 +536,8 @@ h1, h2, h3, h4, h5, h6,
   text-align: center;
   padding: 56px 24px 60px;
   background: white;
-  box-shadow: var(--shadow);
-  border-radius: 16px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
   gap: 14px;
 }
 .empty-state-illustration {
@@ -591,13 +591,13 @@ h1, h2, h3, h4, h5, h6,
 /* ===== Dashboard Hero ===== */
 .dashboard-hero {
   background: white;
-  box-shadow: var(--shadow);
-  border-radius: 16px;
-  padding: 36px 40px 32px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px 28px;
   margin-bottom: 24px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .hero-main {
@@ -617,10 +617,10 @@ h1, h2, h3, h4, h5, h6,
 
 .hero-value {
   font-family: var(--font-heading);
-  font-size: 56px;
+  font-size: 48px;
   font-weight: 600;
   line-height: 1.05;
-  color: var(--primary-dark);
+  color: var(--gray-800);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -803,7 +803,7 @@ h1, h2, h3, h4, h5, h6,
   background: white;
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
 }
 
 .chart-title {
@@ -830,13 +830,13 @@ h1, h2, h3, h4, h5, h6,
 
 .donut-segment {
   fill: none;
-  stroke-width: 32;
+  stroke-width: 26;
   transition: stroke-width 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   transform-origin: center;
 }
 
 .donut-segment.donut-hover {
-  stroke-width: 38;
+  stroke-width: 30;
   opacity: 1;
   filter: brightness(1.1);
 }
@@ -1009,8 +1009,8 @@ h1, h2, h3, h4, h5, h6,
 }
 
 .modal-header h3 {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .modal-close {
@@ -1036,18 +1036,20 @@ h1, h2, h3, h4, h5, h6,
 
 .form-group label {
   display: block;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--gray-700);
-  margin-bottom: 6px;
+  color: var(--gray-500);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px 14px;
-  border: 2px solid var(--gray-200);
+  padding: 9px 12px;
+  border: 1px solid var(--gray-200);
   border-radius: var(--radius);
   font-size: 14px;
   font-family: inherit;
@@ -1554,6 +1556,11 @@ tr.purchased {
   color: var(--gray-400);
 }
 
+.producto-date {
+  font-size: 12px;
+  color: var(--gray-400);
+}
+
 .producto-link a {
   color: var(--gray-400);
   font-size: 12px;
@@ -1868,8 +1875,8 @@ tr.purchased {
 
 .timeline-month-view {
   background: #fff;
-  box-shadow: var(--shadow);
-  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 .calendar-weekdays {
@@ -2008,8 +2015,8 @@ tr.purchased {
   line-height: 1.1;
 }
 .activity-date-day {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   color: var(--gray-800);
 }
 .activity-date-month {
@@ -2272,9 +2279,9 @@ tr.purchased {
 
 .filter-card {
   background: #fff;
-  box-shadow: var(--shadow);
-  border-radius: 12px;
-  padding: 16px 18px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
   margin-bottom: 20px;
   display: flex;
   flex-direction: column;
@@ -2363,13 +2370,12 @@ tr.purchased {
 }
 .expense-group {
   background: #fff;
-  box-shadow: var(--shadow);
-  border-radius: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  transition: box-shadow 0.18s ease;
 }
 .expense-group:hover {
-  box-shadow: var(--shadow-md);
+  border-color: var(--gray-300);
 }
 .expense-group-header {
   display: flex;
@@ -2381,9 +2387,9 @@ tr.purchased {
 }
 .expense-group-title {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  color: var(--gray-900);
+  color: var(--gray-800);
   letter-spacing: -0.01em;
 }
 .expense-group-total {
@@ -2403,7 +2409,7 @@ tr.purchased {
   grid-template-columns: 56px 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--gray-100);
   transition: background 0.12s;
 }
@@ -2441,8 +2447,8 @@ tr.purchased {
   margin-bottom: 2px;
 }
 .expense-desc {
-  font-size: 14.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--gray-800);
   word-break: break-word;
 }
