@@ -89,6 +89,31 @@
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   }
 
+  // --- Thumbnail Helper ---
+  const MATERIAL_ICONS = {
+    'Flooring':    '⬡', // hexagon
+    'Lighting':    '☀',
+    'Paint & Finishes': '◐',
+    'Hardware':    '⚙',
+    'Plumbing':    '◉',
+    'Furniture':   '▣',
+    'Tiles':       '▦',
+    'Textiles':    '≋',
+    'Decor & Accessories': '✦',
+    'Appliances':  '⊞',
+    'Storage & Organization': '⊟',
+    'Samples':     '◈',
+    'Other':       '○'
+  };
+
+  function renderThumbnail(item) {
+    if (item.imageUrl) {
+      return `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" loading="lazy" data-full-src="${escapeHtml(item.imageUrl)}">`;
+    }
+    const icon = MATERIAL_ICONS[item.material] || '○';
+    return `<div class="item-thumbnail-placeholder"><span class="placeholder-icon">${icon}</span></div>`;
+  }
+
   // --- Firebase Auth ---
   const lockScreen = document.getElementById('lock-screen');
   const appEl = document.getElementById('app');
@@ -552,31 +577,10 @@
   const itemForm = document.getElementById('item-form');
   const itemModalTitle = document.getElementById('item-modal-title');
   const shoppingBody = document.getElementById('shopping-body');
-  const shoppingCards = document.getElementById('shopping-cards');
   const shoppingTableWrapper = document.getElementById('shopping-table-wrapper');
-  const shoppingCardsWrapper = document.getElementById('shopping-cards-wrapper');
-  const shoppingViewBtns = document.querySelectorAll('#tab-shopping .view-toggle-btn');
   const shoppingFilterRoom = document.getElementById('shopping-filter-room');
   const shoppingFilterMaterial = document.getElementById('shopping-filter-material');
   const shoppingTotal = document.getElementById('shopping-total');
-
-  // View mode persists across sessions. Default to 'cards'.
-  let shoppingView = Storage.get('shoppingView', 'cards');
-
-  function applyShoppingView() {
-    shoppingTableWrapper.hidden = shoppingView !== 'table';
-    shoppingCardsWrapper.hidden = shoppingView !== 'cards';
-    shoppingViewBtns.forEach(b => b.classList.toggle('active', b.dataset.view === shoppingView));
-  }
-
-  shoppingViewBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      shoppingView = btn.dataset.view;
-      Storage.set('shoppingView', shoppingView);
-      applyShoppingView();
-      renderShopping();
-    });
-  });
   const itemStatus = document.getElementById('item-status');
   const purchaseDateGroup = document.getElementById('purchase-date-group');
   const itemPurchaseDate = document.getElementById('item-purchase-date');
@@ -646,189 +650,123 @@
     }
 
     updateSortHeaders('#tab-shopping', shoppingSort);
-    applyShoppingView();
-
-    // Always render cards (cheap) so the toggle is instant; render table only when visible.
-    renderShoppingCards(filtered);
 
     if (filtered.length === 0) {
-      shoppingBody.innerHTML = '<tr class="empty-row"><td colspan="10">No items match these filters.</td></tr>';
+      shoppingBody.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-illustration">
+            <svg viewBox="0 0 140 110" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M70 6 Q60 14 56 22" stroke-width="1.5" opacity="0.6"/>
+              <path d="M52 22 L96 22 Q104 22 109 28 L130 52 Q134 56 130 60 L100 90 Q96 94 92 90 L42 40 Q38 36 42 32 L48 26 Q50 22 52 22 Z" fill="var(--primary-light)" stroke="currentColor"/>
+              <circle cx="58" cy="32" r="3.5" fill="white" stroke="currentColor"/>
+              <path d="M82 50 C 78 46 72 46 72 52 C 72 58 82 66 82 66 C 82 66 92 58 92 52 C 92 46 86 46 82 50 Z" fill="white" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M22 18 L22 26 M18 22 L26 22" stroke-width="1.5" opacity="0.55"/>
+              <path d="M120 88 L120 96 M116 92 L124 92" stroke-width="1.5" opacity="0.55"/>
+            </svg>
+          </div>
+          <h3 class="empty-state-title">Start your wishlist</h3>
+          <p class="empty-state-text">Save the things you're considering before you commit.</p>
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('add-item-btn').click()">+ Add your first item</button>
+        </div>`;
     } else {
-      shoppingBody.innerHTML = filtered.map(item => {
-        const total = (item.qty || 1) * (item.price || 0);
-        let notesHtml = '';
-        if (item.notes) {
-          const lines = item.notes.split('\n').filter(l => l.trim());
-          if (lines.length > 1) {
-            notesHtml = `<span class="notes-first-line">${escapeHtml(lines[0])}</span><a href="#" class="notes-toggle">Read more</a><span class="notes-full" hidden>${escapeHtml(item.notes).replace(/\n/g, '<br>')}</span>`;
-          } else {
-            notesHtml = escapeHtml(item.notes);
+      // Group by room
+      const groups = {};
+      filtered.forEach(item => {
+        const key = item.room || 'No room';
+        (groups[key] = groups[key] || []).push(item);
+      });
+      const roomKeys = Object.keys(groups).sort((a, b) => {
+        if (a === 'No room') return 1;
+        if (b === 'No room') return -1;
+        return a.localeCompare(b);
+      });
+
+      shoppingBody.innerHTML = roomKeys.map(room => {
+        const items = groups[room];
+        const subtotal = items.reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
+        const countLabel = items.length + (items.length === 1 ? ' item' : ' items');
+
+        const rows = items.map(item => {
+          const total = (item.qty || 1) * (item.price || 0);
+          // Count how many detail fields are filled
+          const filledFields = [item.material, item.vendor, item.price, item.room].filter(Boolean).length;
+          const isSparse = filledFields < 3;
+
+          if (isSparse) {
+            // Sparse row: thumbnail + name + whatever details exist, compact
+            const details = [];
+            if (item.material) details.push(escapeHtml(item.material));
+            if (item.vendor) details.push(escapeHtml(item.vendor));
+            if (total > 0) details.push(formatCurrency(total));
+            const detailStr = details.length ? `<span class="producto-detail-inline">${details.join(' · ')}</span>` : '';
+
+            return `
+              <div class="producto-row producto-row-sparse" data-id="${item.id}">
+                <div class="producto-thumb">${renderThumbnail(item)}</div>
+                <div class="producto-info">
+                  <span class="producto-name">${escapeHtml(item.name || 'Untitled')}</span>
+                  ${detailStr}
+                </div>
+                <div class="producto-status"><span class="status-dot status-wishlist"></span> Wishlist</div>
+                <div class="producto-actions">
+                  <button class="btn-icon edit-item" aria-label="Edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                  <button class="btn-icon delete-item" aria-label="Delete" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+                </div>
+              </div>`;
           }
-        }
-        const imgHtml = item.imageUrl
-          ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
-          : `<div class="item-thumbnail-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
+
+          // Full row: all columns visible
+          return `
+            <div class="producto-row" data-id="${item.id}">
+              <div class="producto-thumb">${renderThumbnail(item)}</div>
+              <div class="producto-info">
+                <span class="producto-name">${escapeHtml(item.name || 'Untitled')}</span>
+                <span class="producto-brand">${escapeHtml(item.vendor || '')}</span>
+              </div>
+              <div class="producto-col producto-type">${escapeHtml(item.material || '')}</div>
+              <div class="producto-col producto-qty">${item.qty || 1}</div>
+              <div class="producto-col producto-price">${total > 0 ? formatCurrency(total) : ''}</div>
+              <div class="producto-col producto-link">${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">Link</a>` : ''}</div>
+              <div class="producto-status"><span class="status-dot status-wishlist"></span> Wishlist</div>
+              <div class="producto-actions">
+                <button class="btn-icon edit-item" aria-label="Edit" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="btn-icon delete-item" aria-label="Delete" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
+              </div>
+            </div>`;
+        }).join('');
 
         return `
-          <tr data-id="${item.id}">
-            <td>${imgHtml}</td>
-            <td>${escapeHtml(item.name || '')}</td>
-            <td><span class="category-badge" style="background:#A8C5B020;color:#2C5F3F">${escapeHtml(item.room || '-')}</span></td>
-            <td><span class="category-badge" style="background:#6C63FF20;color:#6C63FF">${escapeHtml(item.material || '-')}</span></td>
-            <td>${escapeHtml(item.vendor || '-')}</td>
-            <td>${item.qty || 1}</td>
-            <td>${total > 0 ? formatCurrency(total) : '-'}</td>
-            <td>${notesHtml || '-'}</td>
-            <td>${item.link ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener">View</a>` : '-'}</td>
-            <td>
-              <div style="display:flex;gap:4px">
-                <button class="btn-icon edit-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button class="btn-icon delete-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
-              </div>
-            </td>
-          </tr>
-        `;
+          <div class="producto-group">
+            <div class="producto-group-header">
+              <span class="producto-group-title">${escapeHtml(room)}</span>
+              <span class="producto-group-meta">${countLabel} · ${formatCurrency(subtotal)}</span>
+            </div>
+            ${rows}
+          </div>`;
       }).join('');
     }
 
-    // Wishlist total (only items currently in the wishlist)
+    // Wishlist total
     const wishlistTotal = shoppingItems
       .filter(i => !i.purchased)
       .reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
     shoppingTotal.textContent = `Wishlist Total: ${formatCurrency(wishlistTotal)}`;
 
     // Events
-    shoppingBody.querySelectorAll('.notes-toggle').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const firstLine = link.previousElementSibling;
-        const full = link.nextElementSibling;
-        if (full.hidden) {
-          full.hidden = false;
-          firstLine.hidden = true;
-          link.textContent = 'Show less';
-        } else {
-          full.hidden = true;
-          firstLine.hidden = false;
-          link.textContent = 'Read more';
-        }
-      });
-    });
     shoppingBody.querySelectorAll('.edit-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.closest('tr').dataset.id;
+        const id = btn.closest('.producto-row').dataset.id;
         editItem(id);
       });
     });
     shoppingBody.querySelectorAll('.delete-item').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.closest('tr').dataset.id;
+        const id = btn.closest('.producto-row').dataset.id;
         deleteItem(id);
       });
     });
-
-    // Thumbnail click → lightbox
     shoppingBody.querySelectorAll('.item-thumbnail').forEach(img => {
       img.addEventListener('click', () => {
-        openLightbox(img.dataset.fullSrc);
-      });
-    });
-  }
-
-  function renderWishlistCard(item) {
-    const total = (item.qty || 1) * (item.price || 0);
-
-    const imgHtml = item.imageUrl
-      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
-      : `<svg class="placeholder-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
-
-    // Meta line (no Room — that's now the group header): Type · Vendor · Qty N · 🔗
-    const metaParts = [];
-    if (item.material) metaParts.push(escapeHtml(item.material));
-    if (item.vendor)   metaParts.push(escapeHtml(item.vendor));
-    if (item.qty && item.qty > 1) metaParts.push('Qty ' + item.qty);
-    if (item.link)     metaParts.push(`<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener" title="Open product link">🔗 Link</a>`);
-    const metaHtml = metaParts.join(' <span class="shopping-card-meta-sep">·</span> ');
-
-    const notesHtml = item.notes
-      ? `<div class="shopping-card-notes">${escapeHtml(item.notes)}</div>`
-      : '';
-
-    return `
-      <div class="shopping-card" data-id="${item.id}">
-        <div class="shopping-card-img">${imgHtml}</div>
-        <div class="shopping-card-info">
-          <div class="shopping-card-name">${escapeHtml(item.name || 'Untitled item')}</div>
-          <div class="shopping-card-meta">${metaHtml || '<span style="color:var(--gray-400)">No details yet</span>'}</div>
-          ${notesHtml}
-        </div>
-        <div class="shopping-card-price">${total > 0 ? formatCurrency(total) : '—'}</div>
-        <div class="shopping-card-bottom">
-          <div class="card-actions">
-            <button class="btn-icon edit-card-item" aria-label="Edit item" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-            <button class="btn-icon delete-card-item" aria-label="Delete item" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderShoppingCards(filtered) {
-    if (filtered.length === 0) {
-      shoppingCards.innerHTML = '<div class="empty-row">No items match these filters.</div>';
-      return;
-    }
-
-    // Group by room (alphabetical, "No room" last) — same pattern as Purchased History.
-    const groups = {};
-    filtered.forEach(item => {
-      const key = item.room || 'No room';
-      (groups[key] = groups[key] || []).push(item);
-    });
-    const roomKeys = Object.keys(groups).sort((a, b) => {
-      if (a === 'No room') return 1;
-      if (b === 'No room') return -1;
-      return a.localeCompare(b);
-    });
-
-    shoppingCards.innerHTML = roomKeys.map(room => {
-      const items = groups[room];
-      const subtotal = items.reduce((s, i) => s + (i.qty || 1) * (i.price || 0), 0);
-      const countLabel = items.length + (items.length === 1 ? ' item' : ' items');
-
-      return `
-        <div class="room-group">
-          <div class="room-group-header">
-            <span class="room-group-title">${escapeHtml(room)}</span>
-            <div class="room-group-meta">
-              <span class="room-group-count">${countLabel}</span>
-              <span class="expense-stats-sep">·</span>
-              <span class="room-group-total">${formatCurrency(subtotal)}</span>
-            </div>
-          </div>
-          <div class="room-group-body">
-            ${items.map(renderWishlistCard).join('')}
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Wire up events for card view
-    shoppingCards.querySelectorAll('.edit-card-item').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        editItem(btn.closest('.shopping-card').dataset.id);
-      });
-    });
-    shoppingCards.querySelectorAll('.delete-card-item').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteItem(btn.closest('.shopping-card').dataset.id);
-      });
-    });
-    shoppingCards.querySelectorAll('.item-thumbnail').forEach(img => {
-      img.addEventListener('click', (e) => {
-        e.stopPropagation();
         openLightbox(img.dataset.fullSrc);
       });
     });
@@ -1305,9 +1243,7 @@
   function renderPurchasedCard(item) {
     const total = (item.qty || 1) * (item.price || 0);
 
-    const imgHtml = item.imageUrl
-      ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" class="item-thumbnail" data-full-src="${escapeHtml(item.imageUrl)}">`
-      : `<svg class="placeholder-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+    const imgHtml = renderThumbnail(item);
 
     // Meta line: Type · Vendor · Qty · Purchased <date> · 🔗
     const metaParts = [];
